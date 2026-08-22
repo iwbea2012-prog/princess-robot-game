@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>プリンセスぬりえ</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,255,255,0.6) 0 6px, transparent 7px),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.6) 0 5px, transparent 6px),
+      radial-gradient(circle at 30% 80%, rgba(255,255,255,0.5) 0 4px, transparent 5px),
+      radial-gradient(circle at 90% 70%, rgba(255,255,255,0.5) 0 5px, transparent 6px),
+      radial-gradient(circle at 60% 40%, rgba(255,255,255,0.5) 0 4px, transparent 5px),
+      linear-gradient(160deg, #ffe1f0 0%, #f4c9ff 45%, #c7e0ff 100%);
+    background-attachment: fixed;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  .app { max-width: 720px; margin: 0 auto; padding: 10px 10px 24px; }
+  header { display:flex; align-items:center; justify-content:space-between; padding: 6px 4px 10px; }
+  h1 { font-size: 20px; margin:0; color:#8e2a6b; text-shadow: 0 1px 0 #fff; letter-spacing: 1px; }
+  .icon-btn {
+    width: 46px; height:46px; border-radius: 50%; border:none;
+    background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    font-size: 22px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+  }
+  .icon-btn:active { transform: scale(0.9); }
+  .header-btns { display:flex; gap:8px; }
+
+  .tabs { display:flex; gap:8px; justify-content:center; margin: 4px 0 12px; flex-wrap: wrap; }
+  .tab {
+    width: 58px; height:58px; border-radius: 50%; border: 3px solid transparent;
+    background: #fff; font-size: 27px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  .tab.active { border-color:#ff5fa2; transform: scale(1.12); box-shadow: 0 4px 12px rgba(255,95,162,0.5); }
+
+  .stage-card {
+    background: #fffdf9; border-radius: 26px; box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    padding: 10px; position: relative; overflow:hidden;
+    max-width: 560px; margin: 0 auto;
+  }
+  .page { display:none; position: relative; }
+  .page.active { display:block; }
+  .svg-wrap svg { width:100%; height:auto; display:block; touch-action: manipulation; }
+  .svg-wrap .colorable { cursor:pointer; transition: fill .12s ease; }
+  .svg-wrap .colorable.pop { transform-box: fill-box; transform-origin: center; animation: popAnim .22s ease; }
+  @keyframes popAnim { 0%{transform:scale(1);} 50%{transform:scale(1.18);} 100%{transform:scale(1);} }
+
+  .celebrate-overlay {
+    position:absolute; inset:0; background: rgba(255,255,255,0.92);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index: 20; border-radius: 20px; padding: 20px;
+    animation: fadeIn .35s ease;
+  }
+  .celebrate-overlay[hidden] { display:none; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .celebrate-emoji { font-size: 64px; animation: bounce .6s ease infinite alternate; }
+  @keyframes bounce { from{ transform:translateY(0);} to{ transform:translateY(-14px);} }
+  .celebrate-text { font-size: 26px; color:#e0499a; font-weight:bold; margin-top:6px; }
+  .celebrate-sub { font-size: 15px; color:#a45; margin-top:6px; }
+  .confetti-piece { position:absolute; top:-16px; width:10px; height:16px; opacity:0.95; border-radius:2px; }
+
+  .palette {
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+    padding: 16px 6px 4px;
+  }
+  .swatch {
+    width: 46px; height:46px; border-radius:50%; border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor:pointer; flex-shrink:0;
+  }
+  .swatch.selected { border-color:#333; transform: scale(1.18); box-shadow: 0 0 0 3px #ffd700; }
+
+  .nav-row { display:flex; align-items:center; justify-content:center; gap:16px; margin-top: 10px; }
+  .nav-arrow {
+    width:44px; height:44px; border-radius:50%; border:none; background:#fff;
+    box-shadow:0 3px 8px rgba(0,0,0,0.18); font-size:22px; cursor:pointer;
+  }
+  .nav-arrow:active { transform: scale(0.9); }
+  .dots { display:flex; gap:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#e6bede; }
+  .dot.active { background:#ff5fa2; width:22px; border-radius:6px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>✨ プリンセスぬりえ ✨</h1>
+    <div class="header-btns">
+      <button class="icon-btn" id="resetBtn" title="リセット">🧽</button>
+      <button class="icon-btn" id="muteBtn" title="おと">🔊</button>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage-card">
+    <div class="page active" data-index="0">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M40,60 L46,76 L63,76 L49,86 L54,102 L40,92 L26,102 L31,86 L17,76 L34,76 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M360,90 L366,106 L383,106 L369,116 L374,132 L360,122 L346,132 L351,116 L337,106 L354,106 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M355,398 C355,386 365,380 372,386 C379,380 389,386 389,398 C389,410 372,422 372,422 C372,422 355,410 355,398 Z"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="130" rx="98" ry="92"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="150" r="66"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="96" cy="185" r="36"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="304" cy="185" r="36"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="150" y="55" width="100" height="18" rx="4"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M150,55 L165,18 L182,55 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M180,55 L200,4 L220,55 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M218,55 L235,18 L250,55 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="38" r="7"/>
+          <circle class="fixed" fill="#333" cx="175" cy="150" r="6"/>
+          <circle class="fixed" fill="#333" cx="225" cy="150" r="6"/>
+          <circle class="fixed" fill="#ffb6c1" cx="160" cy="172" r="10" opacity="0.6"/>
+          <circle class="fixed" fill="#ffb6c1" cx="240" cy="172" r="10" opacity="0.6"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" d="M180,182 Q200,196 220,182"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="182" y="205" width="36" height="28"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="122" cy="245" rx="34" ry="42"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="278" cy="245" rx="34" ry="42"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="104" cy="300" r="16"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="296" cy="300" r="16"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M150,232 L250,232 L266,310 L134,310 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M134,310 L266,310 L350,505 L50,505 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="140" cy="400" r="9"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="440" r="9"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="260" cy="400" r="9"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="360" r="9"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,300 L172,285 L172,315 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,300 L228,285 L228,315 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="300" r="8"/>
+          <line class="fixed" x1="296" y1="300" x2="345" y2="235" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M345,215 L350,228 L364,228 L353,237 L357,251 L345,242 L333,251 L337,237 L326,228 L340,228 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="1">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="60" cy="55" r="30"/>
+          <ellipse class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="330" cy="60" rx="40" ry="20"/>
+          <ellipse class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="300" cy="80" rx="28" ry="16"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="0" y="350" width="400" height="50"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="40" y="190" width="65" height="160"/>
+          <polygon class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" points="35,190 72,130 110,190"/>
+          <rect class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" x="60" y="235" width="24" height="34" rx="12"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="295" y="190" width="65" height="160"/>
+          <polygon class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" points="290,190 327,130 365,190"/>
+          <rect class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" x="316" y="235" width="24" height="34" rx="12"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="150" y="110" width="100" height="240"/>
+          <polygon class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" points="145,110 200,40 255,110"/>
+          <rect class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" x="168" y="150" width="24" height="34" rx="12"/>
+          <rect class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" x="208" y="150" width="24" height="34" rx="12"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M200,40 L200,15 L222,25 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M72,130 L72,108 L92,117 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M327,130 L327,108 L347,117 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M175,350 L175,300 Q175,270 200,270 Q225,270 225,300 L225,350 Z"/>
+          <circle class="fixed" fill="#333" cx="212" cy="320" r="3"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="2">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="0" y="330" width="400" height="30"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="4" cx="130" cy="300" r="45"/>
+          <circle class="fixed" fill="#fff" stroke="#333" stroke-width="2" cx="130" cy="300" r="12"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="4" cx="290" cy="300" r="45"/>
+          <circle class="fixed" fill="#fff" stroke="#333" stroke-width="2" cx="290" cy="300" r="12"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="210" cy="220" rx="120" ry="80"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="2" d="M170,145 Q160,220 170,295"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="2" d="M210,140 Q205,220 210,300"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="2" d="M250,145 Q260,220 250,295"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M110,160 Q210,60 310,160 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="210" cy="215" r="35"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="198" y="55" width="24" height="30" rx="6"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M210,150 L185,132 L185,168 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M210,150 L235,132 L235,168 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="210" cy="150" r="9"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M40,80 L45,95 L60,95 L48,104 L53,119 L40,110 L27,119 L32,104 L20,95 L35,95 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M360,100 L365,113 L378,113 L367,121 L371,134 L360,126 L349,134 L353,121 L342,113 L355,113 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="3">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="70" y="230" width="260" height="70" rx="12"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M70,230 L100,150 L130,230 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M130,230 L160,110 L190,230 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M190,230 L200,60 L210,230 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M210,230 L240,110 L270,230 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M270,230 L300,150 L330,230 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="100" cy="185" r="12"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="160" cy="165" r="12"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,90 L216,106 L200,122 L184,106 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="240" cy="165" r="12"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="300" cy="185" r="12"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="110" cy="260" r="10"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="160" cy="260" r="10"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="260" r="10"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="240" cy="260" r="10"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="290" cy="260" r="10"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M50,60 L55,75 L70,75 L58,84 L63,99 L50,90 L37,99 L42,84 L30,75 L45,75 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M350,80 L355,93 L368,93 L357,101 L361,114 L350,106 L339,114 L343,101 L332,93 L345,93 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M330,300 L335,313 L348,313 L337,321 L341,334 L330,326 L319,334 L323,321 L312,313 L325,313 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="4">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="140" y="270" width="24" height="70" rx="8"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="190" y="270" width="24" height="70" rx="8"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="240" y="270" width="24" height="70" rx="8"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="285" y="270" width="24" height="70" rx="8"/>
+          <rect class="fixed" fill="#333" x="140" y="332" width="24" height="10" rx="3"/>
+          <rect class="fixed" fill="#333" x="190" y="332" width="24" height="10" rx="3"/>
+          <rect class="fixed" fill="#333" x="240" y="332" width="24" height="10" rx="3"/>
+          <rect class="fixed" fill="#333" x="285" y="332" width="24" height="10" rx="3"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="220" cy="250" rx="110" ry="60"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="330" cy="180" r="48"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="368" cy="198" rx="24" ry="18"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M300,140 L295,110 L320,132 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M320,120 L330,60 L342,122 Z"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="290" cy="140" rx="24" ry="30"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="265" cy="165" rx="24" ry="30"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="245" cy="195" rx="24" ry="30"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="230" cy="228" rx="22" ry="28"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="110" cy="235" rx="20" ry="26"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="95" cy="265" rx="20" ry="26"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="90" cy="298" rx="18" ry="24"/>
+          <circle class="fixed" fill="#333" cx="345" cy="175" r="5"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M60,80 L65,95 L80,95 L68,104 L73,119 L60,110 L47,119 L52,104 L40,95 L55,95 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M200,50 L205,63 L218,63 L207,71 L211,84 L200,76 L189,84 L193,71 L182,63 L195,63 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="5">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg">
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="55" cy="80" r="9"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="345" cy="150" r="7"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="355" cy="300" r="10"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="35" cy="250" r="6"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="110" rx="95" ry="88"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M110,140 Q90,220 110,300 Q130,260 130,180 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M290,140 Q310,220 290,300 Q270,260 270,180 Z"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="130" r="62"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M133,60 L138,73 L152,73 L141,81 L145,94 L133,86 L121,94 L125,81 L114,73 L128,73 Z"/>
+          <circle class="fixed" fill="#333" cx="178" cy="128" r="6"/>
+          <circle class="fixed" fill="#333" cx="222" cy="128" r="6"/>
+          <circle class="fixed" fill="#ffb6c1" cx="163" cy="150" r="9" opacity="0.6"/>
+          <circle class="fixed" fill="#ffb6c1" cx="237" cy="150" r="9" opacity="0.6"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" d="M182,160 Q200,172 218,160"/>
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="182" y="185" width="36" height="22"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M150,210 A20,20 0 0 1 190,210 L170,235 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M210,210 A20,20 0 0 1 250,210 L230,235 Z"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="130" cy="250" rx="18" ry="45" transform="rotate(-25 130 250)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="270" cy="250" rx="18" ry="45" transform="rotate(25 270 250)"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="108" cy="292" r="13"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="292" cy="292" r="13"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M165,230 L235,230 L245,270 L155,270 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M155,270 L245,270 L270,380 Q200,400 130,380 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M130,380 L60,410 L140,400 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M270,380 L340,410 L260,400 Z"/>
+          <path class="fixed" fill="none" stroke="#999" stroke-width="2" d="M170,300 Q180,295 190,300"/>
+          <path class="fixed" fill="none" stroke="#999" stroke-width="2" d="M210,320 Q220,315 230,320"/>
+          <path class="fixed" fill="none" stroke="#999" stroke-width="2" d="M175,345 Q185,340 195,345"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="6">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M60,300 Q60,320 90,322 L300,322 Q330,320 335,300 L330,290 L70,290 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M300,290 L330,290 L340,340 L305,345 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M70,290 Q60,240 90,210 Q140,170 220,180 Q280,190 300,230 Q310,260 300,290 Z"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="2" d="M100,230 Q160,205 250,220"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M150,185 Q160,145 200,145 Q240,145 250,185 Q240,165 200,165 Q160,165 150,185 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,175 L172,160 L172,190 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,175 L228,160 L228,190 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="175" r="8"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M330,120 L335,133 L348,133 L337,141 L341,154 L330,146 L319,154 L323,141 L312,133 L325,133 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M55,150 L60,163 L73,163 L62,171 L66,184 L55,176 L44,184 L48,171 L37,163 L50,163 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M320,250 L324,260 L334,260 L326,266 L329,276 L320,270 L311,276 L314,266 L306,260 L316,260 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="7">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <rect class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" x="0" y="350" width="400" height="40"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="160" cy="210" rx="85" ry="65"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="160" cy="150" rx="45" ry="18"/>
+          <circle class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="160" cy="135" r="9"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M235,190 Q280,175 290,150 Q300,140 295,160 Q285,190 245,210 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M75,190 Q40,190 40,225 Q40,260 80,255 Q55,225 75,190 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="140" cy="200" r="7"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="180" cy="225" r="7"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="150" cy="240" r="7"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="190" r="7"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="320" cy="330" rx="60" ry="16"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M280,270 L360,270 L352,320 L288,320 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M360,285 Q385,285 385,300 Q385,315 360,310 Z"/>
+          <path class="fixed" fill="none" stroke="#bbb" stroke-width="3" stroke-linecap="round" d="M305,255 Q300,240 310,225 Q320,210 312,195"/>
+          <path class="fixed" fill="none" stroke="#bbb" stroke-width="3" stroke-linecap="round" d="M330,255 Q335,240 325,225 Q315,210 323,195"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="8">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
+          <path class="fixed" fill="none" stroke="#4caf50" stroke-width="6" d="M180,340 Q170,260 190,180"/>
+          <path class="fixed" fill="none" stroke="#4caf50" stroke-width="6" d="M200,340 Q200,240 200,150"/>
+          <path class="fixed" fill="none" stroke="#4caf50" stroke-width="6" d="M220,340 Q230,260 210,180"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" d="M180,280 Q150,270 160,250 Q190,255 180,280 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" d="M215,255 Q245,245 238,225 Q208,232 215,255 Z"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="154" rx="12" ry="18" transform="rotate(0 190 170)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="154" rx="12" ry="18" transform="rotate(72 190 170)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="154" rx="12" ry="18" transform="rotate(144 190 170)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="154" rx="12" ry="18" transform="rotate(216 190 170)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="154" rx="12" ry="18" transform="rotate(288 190 170)"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="190" cy="170" r="9"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="124" rx="12" ry="18" transform="rotate(0 200 140)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="124" rx="12" ry="18" transform="rotate(72 200 140)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="124" rx="12" ry="18" transform="rotate(144 200 140)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="124" rx="12" ry="18" transform="rotate(216 200 140)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="124" rx="12" ry="18" transform="rotate(288 200 140)"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="200" cy="140" r="9"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="156" rx="12" ry="18" transform="rotate(0 212 172)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="156" rx="12" ry="18" transform="rotate(72 212 172)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="156" rx="12" ry="18" transform="rotate(144 212 172)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="156" rx="12" ry="18" transform="rotate(216 212 172)"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="156" rx="12" ry="18" transform="rotate(288 212 172)"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="212" cy="172" r="9"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M150,340 L250,340 L270,430 L130,430 Z"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="340" rx="50" ry="12"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,355 L172,340 L172,370 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" d="M200,355 L228,340 L228,370 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="355" r="8"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+    <div class="page" data-index="9">
+      <div class="svg-wrap">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <path class="fixed" fill="none" stroke="#333" stroke-width="3" d="M195,120 Q180,90 165,75"/>
+          <circle class="fixed" fill="#333" cx="165" cy="75" r="5"/>
+          <path class="fixed" fill="none" stroke="#333" stroke-width="3" d="M205,120 Q220,90 235,75"/>
+          <circle class="fixed" fill="#333" cx="235" cy="75" r="5"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M188,150 Q100,80 60,140 Q40,190 100,210 Q150,220 188,180 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M212,150 Q300,80 340,140 Q360,190 300,210 Q250,220 212,180 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M188,210 Q120,230 110,280 Q105,320 160,300 Q195,285 190,240 Z"/>
+          <path class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" d="M212,210 Q280,230 290,280 Q295,320 240,300 Q205,285 210,240 Z"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="110" cy="150" r="8"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="290" cy="150" r="8"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="140" cy="270" r="8"/>
+          <circle class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" cx="260" cy="270" r="8"/>
+          <ellipse class="colorable" fill="#ffffff" stroke="#333" stroke-width="3" cx="200" cy="205" rx="13" ry="100"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M70,90 L74,100 L85,100 L76,106 L79,117 L70,110 L61,117 L64,106 L55,100 L66,100 Z"/>
+          <path class="colorable deco" fill="#ffffff" stroke="#333" stroke-width="2" d="M330,110 L334,120 L345,120 L336,126 L339,137 L330,130 L321,137 L324,126 L315,120 L326,120 Z"/>
+        </svg>
+      </div>
+      <div class="celebrate-overlay" hidden></div>
+    </div>
+
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-arrow" id="prevBtn">◀</button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-arrow" id="nextBtn">▶</button>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+</div>
+
+<script>
+(function(){
+  var colors = [
+    '#ff6fa5','#ff1493','#ffc0e0','#ff4757','#ffa502','#feca57','#ffd700',
+    '#7bed9f','#2ed573','#26d0ce','#70a1ff','#1e90ff','#a55eea','#d6a4f5',
+    '#a0522d','#2f3542','#ffffff','#c8d6e5'
+  ];
+  var icons = ['👑','🏰','🎃','💎','🦄','🧜‍♀️','👠','🫖','🌸','🦋'];
+  var currentColor = colors[0];
+  var currentIndex = 0;
+  var muted = false;
+  var audioCtx = null;
+
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var tabsEl = document.getElementById('tabs');
+  var dotsEl = document.getElementById('dots');
+  var paletteEl = document.getElementById('palette');
+
+  // build tabs
+  icons.forEach(function(icon, i){
+    var b = document.createElement('button');
+    b.className = 'tab' + (i===0 ? ' active' : '');
+    b.textContent = icon;
+    b.addEventListener('click', function(){ showPage(i); });
+    tabsEl.appendChild(b);
+  });
+
+  // build dots
+  icons.forEach(function(_, i){
+    var d = document.createElement('div');
+    d.className = 'dot' + (i===0 ? ' active' : '');
+    dotsEl.appendChild(d);
+  });
+
+  // build palette
+  colors.forEach(function(c, i){
+    var s = document.createElement('div');
+    s.className = 'swatch' + (i===0 ? ' selected' : '');
+    s.style.background = c;
+    s.addEventListener('click', function(){
+      document.querySelectorAll('.swatch').forEach(function(el){ el.classList.remove('selected'); });
+      s.classList.add('selected');
+      currentColor = c;
+    });
+    paletteEl.appendChild(s);
+  });
+
+  function showPage(idx){
+    currentIndex = idx;
+    pages.forEach(function(p, i){ p.classList.toggle('active', i === idx); });
+    document.querySelectorAll('.tab').forEach(function(t, i){ t.classList.toggle('active', i === idx); });
+    document.querySelectorAll('.dot').forEach(function(d, i){ d.classList.toggle('active', i === idx); });
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function(){
+    showPage((currentIndex - 1 + pages.length) % pages.length);
+  });
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    showPage((currentIndex + 1) % pages.length);
+  });
+
+  document.getElementById('muteBtn').addEventListener('click', function(e){
+    muted = !muted;
+    e.currentTarget.textContent = muted ? '🔇' : '🔊';
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    var page = pages[currentIndex];
+    page.querySelectorAll('.colorable').forEach(function(el){ el.setAttribute('fill', '#ffffff'); });
+    var overlay = page.querySelector('.celebrate-overlay');
+    overlay.hidden = true;
+    overlay.innerHTML = '';
+    page.dataset.celebrated = '0';
+  });
+
+  function ensureAudio(){
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+  }
+  function playTone(freq, dur, delay, type){
+    if (muted) return;
+    ensureAudio();
+    if (!audioCtx) return;
+    delay = delay || 0;
+    var t0 = audioCtx.currentTime + delay;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.03);
+  }
+  function playPop(){ playTone(600 + Math.random()*250, 0.12); }
+  function playSuccess(){
+    [523,659,784,1046].forEach(function(f, i){ playTone(f, 0.28, i*0.15); });
+  }
+
+  function isPageComplete(pageEl){
+    var required = pageEl.querySelectorAll('.colorable:not(.deco)');
+    for (var i=0; i<required.length; i++){
+      var f = (required[i].getAttribute('fill') || '').toLowerCase();
+      if (!f || f === '#ffffff' || f === '#fff' || f === 'white') return false;
+    }
+    return true;
+  }
+
+  var confettiColors = ['#ff6fa5','#ffd700','#70a1ff','#7bed9f','#a55eea','#ff4757','#feca57'];
+  function celebrate(pageEl){
+    if (pageEl.dataset.celebrated === '1') return;
+    pageEl.dataset.celebrated = '1';
+    playSuccess();
+    var overlay = pageEl.querySelector('.celebrate-overlay');
+    overlay.innerHTML =
+      '<div class="celebrate-emoji">🎉</div>' +
+      '<div class="celebrate-text">できたね!✨</div>' +
+      '<div class="celebrate-sub">とってもすてき!(タップでとじる)</div>';
+    for (var i=0; i<28; i++){
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = (Math.random()*100) + '%';
+      piece.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+      var dur = 1.2 + Math.random()*1.3;
+      var delay = Math.random()*0.6;
+      piece.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+      overlay.appendChild(piece);
+    }
+    overlay.hidden = false;
+    overlay.addEventListener('click', function closeIt(){
+      overlay.hidden = true;
+      overlay.removeEventListener('click', closeIt);
+    });
+  }
+
+  // confetti keyframes injected via JS (needs page height)
+  var styleEl = document.createElement('style');
+  styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(420px) rotate(360deg); opacity: 0.25; } }';
+  document.head.appendChild(styleEl);
+
+  document.querySelectorAll('.colorable').forEach(function(el){
+    el.addEventListener('click', function(e){
+      el.setAttribute('fill', currentColor);
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+      playPop();
+      var pageEl = el.closest('.page');
+      if (isPageComplete(pageEl)) celebrate(pageEl);
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
