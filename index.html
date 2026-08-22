@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Princess & Robot AI Coding Playground</title>
+<style>
+  :root{
+    --pink:#ff8fc7;
+    --pink-dark:#ff5fae;
+    --gold:#ffd76a;
+    --blue:#8fd6ff;
+    --blue-dark:#4fb8f0;
+    --purple:#c9a8ff;
+    --bg:#fff3fa;
+    --ink:#5b3a52;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic", sans-serif;
+    background: radial-gradient(circle at 20% 10%, #fff8ff 0%, var(--bg) 40%, #ffe6f4 100%);
+    color: var(--ink);
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+  #app{
+    width:100%; height:100%;
+    position:relative;
+    display:flex; flex-direction:column;
+  }
+  .view{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    padding: env(safe-area-inset-top,20px) 20px 20px 20px;
+    overflow-y:auto;
+  }
+  .view.active{ display:flex; }
+
+  /* sparkle bg */
+  .sparkle{
+    position:absolute; pointer-events:none; opacity:.8;
+    animation: twinkle 2.4s ease-in-out infinite;
+    font-size: 22px;
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.2; transform:scale(.8) rotate(0deg);}
+    50%{ opacity:1; transform:scale(1.15) rotate(20deg);}
+  }
+
+  h1.title{
+    font-size: clamp(22px,5vw,34px);
+    margin: 6px 0 2px 0;
+    color: var(--pink-dark);
+    text-shadow: 2px 2px 0 #fff, 0 0 10px #ffd0ea;
+    text-align:center;
+  }
+  .subtitle{
+    font-size: clamp(14px,3vw,18px);
+    color:#a5638c;
+    margin-bottom: 10px;
+    text-align:center;
+  }
+
+  .char{
+    font-size: 92px;
+    line-height:1;
+    filter: drop-shadow(0 6px 8px rgba(255,120,180,.35));
+    animation: bob 2.6s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{ transform: translateY(0) rotate(-2deg); }
+    50%{ transform: translateY(-10px) rotate(2deg); }
+  }
+
+  .speech-bubble{
+    background:#fff;
+    border: 4px solid var(--pink);
+    border-radius: 24px;
+    padding: 14px 18px;
+    max-width: 480px;
+    width: 92%;
+    font-size: clamp(15px,3.6vw,19px);
+    text-align:center;
+    box-shadow: 0 6px 0 rgba(255,150,200,.4);
+    margin: 8px auto 14px auto;
+    position:relative;
+    font-weight:700;
+  }
+
+  .menu-row{
+    display:flex; flex-wrap:wrap; gap:16px; justify-content:center;
+    margin-top: 10px;
+    width:100%;
+    max-width: 720px;
+  }
+  .big-btn{
+    flex: 1 1 210px;
+    min-height: 130px;
+    border-radius: 28px;
+    border: none;
+    background: linear-gradient(160deg, #fff, #ffeaf6);
+    box-shadow: 0 8px 0 var(--pink-dark), 0 12px 18px rgba(255,100,170,.25);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 6px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--pink-dark);
+    padding: 10px;
+    cursor:pointer;
+    transition: transform .08s;
+  }
+  .big-btn .emoji{ font-size: 46px; }
+  .big-btn:active{ transform: translateY(6px); box-shadow: 0 2px 0 var(--pink-dark); }
+  .big-btn.blue{ box-shadow: 0 8px 0 var(--blue-dark), 0 12px 18px rgba(90,180,240,.25); color:#2c7fab; }
+  .big-btn.blue:active{ box-shadow: 0 2px 0 var(--blue-dark); }
+
+  .top-bar{
+    width:100%; max-width: 640px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 6px;
+  }
+  .icon-btn{
+    width:56px; height:56px; border-radius:50%;
+    border:none;
+    background:#fff;
+    box-shadow: 0 5px 0 rgba(0,0,0,.12);
+    font-size: 26px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .icon-btn:active{ transform: translateY(4px); box-shadow:none; }
+
+  /* ---- Game 1: sequence maze ---- */
+  .grid-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    width:100%;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(4, 62px);
+    grid-template-rows: repeat(4, 62px);
+    gap:6px;
+    background: #ffd9ee;
+    padding: 10px;
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 4px #fff;
+  }
+  .cell{
+    background:#fff;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 30px;
+    position:relative;
+  }
+  .cell.wall{ background:#e3b6cf; }
+  .cell.goal{ background:#fff6c9; }
+  .cell .who{ position:absolute; font-size:34px; transition: all .35s ease; }
+
+  .block-tray{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    margin: 10px 0;
+  }
+  .arrow-btn{
+    width:64px; height:64px; border-radius:18px;
+    border:none;
+    font-size: 30px;
+    background: linear-gradient(160deg,#fff,#e9f6ff);
+    box-shadow: 0 6px 0 var(--blue-dark);
+    cursor:pointer;
+  }
+  .arrow-btn:active{ transform: translateY(5px); box-shadow:none; }
+
+  .program-strip{
+    display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+    min-height: 54px;
+    background:#fff;
+    border-radius:16px;
+    padding: 8px;
+    width: 92%;
+    max-width: 480px;
+    align-items:center;
+    box-shadow: inset 0 0 0 3px #ffd9ee;
+  }
+  .program-strip .step{
+    width:40px; height:40px; border-radius:10px;
+    background: var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+  }
+  .program-strip .step.running{ background: var(--pink); animation:pulse .4s; }
+  @keyframes pulse{ 0%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+  .ctrl-row{ display:flex; gap:14px; margin-top:10px; }
+  .action-btn{
+    padding: 12px 22px;
+    border-radius: 20px;
+    border:none;
+    font-size:17px;
+    font-weight:800;
+    cursor:pointer;
+    color:#fff;
+  }
+  .action-btn.go{ background: linear-gradient(160deg,#7fe0a0,#3fbf6e); box-shadow: 0 6px 0 #2a9450; }
+  .action-btn.clear{ background: linear-gradient(160deg,#ffb0b0,#ff7a7a); box-shadow: 0 6px 0 #d84a4a; }
+  .action-btn:active{ transform: translateY(5px); box-shadow:none; }
+
+  /* ---- Game 2: sorting ---- */
+  .sort-area{
+    display:flex; gap:14px; width:100%; max-width:520px; justify-content:center; margin-top:6px;
+  }
+  .basket{
+    flex:1;
+    min-height: 150px;
+    background:#fff;
+    border-radius: 22px;
+    border: 4px dashed var(--pink);
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding: 10px;
+    gap:6px;
+  }
+  .basket.over{ background:#ffeaf6; border-color: var(--pink-dark); }
+  .basket .label{ font-weight:800; color:var(--pink-dark); font-size:15px; }
+  .basket .items{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+  .basket .items span{ font-size:20px; }
+
+  .item-card{
+    font-size: 54px;
+    background:#fff;
+    border-radius:18px;
+    width:96px; height:96px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 0 #e9b8d3;
+    margin: 16px auto;
+    cursor:grab;
+    touch-action:none;
+  }
+  .progress-dots{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; justify-content:center; max-width:480px; }
+  .progress-dots span{ width:12px; height:12px; border-radius:50%; background:#ffd9ee; }
+  .progress-dots span.done{ background: var(--pink-dark); }
+  .progress-text{ font-weight:800; color:var(--pink-dark); margin-top:6px; font-size:15px; }
+
+  .confetti-layer{
+    position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden;
+  }
+  .confetti-piece{
+    position:absolute; top:-20px; font-size:26px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(110vh) rotate(360deg); opacity:.9; }
+  }
+
+  .mute-btn{ position:fixed; top:10px; right:10px; z-index:60; }
+
+  /* ---- Game 3: copy the pattern (loop) ---- */
+  .simon-row{
+    display:grid; grid-template-columns:repeat(2,120px); gap:14px;
+    margin:14px 0;
+  }
+  .simon-btn{
+    width:120px; height:120px; border-radius:24px; border:none;
+    font-size:44px; cursor:pointer;
+    box-shadow:0 8px 0 rgba(0,0,0,.18);
+    transition:transform .08s, filter .15s;
+  }
+  .simon-btn:active{ transform:translateY(6px); box-shadow:none; }
+  .simon-btn.c0{ background:#ff8383; }
+  .simon-btn.c1{ background:#6fc6ff; }
+  .simon-btn.c2{ background:#8ee89a; }
+  .simon-btn.c3{ background:#ffe083; }
+  .simon-btn.lit{ filter:brightness(1.45) saturate(1.3); transform:scale(1.06); }
+  .simon-btn.wrong-flash{ filter:brightness(.55); }
+
+  /* ---- Game 4: bug hunt ---- */
+  .program-strip .step.buggy-hint{ cursor:pointer; }
+  .program-strip .step.fixed{ background:#9be89a; }
+  .program-strip .step.shake{ animation:shake .4s; }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+
+  /* ---- Game 5: memory match ---- */
+  .memory-grid{
+    display:grid; grid-template-columns:repeat(4,64px); gap:8px;
+    justify-content:center; margin:10px 0;
+  }
+  .memory-card{
+    width:64px; height:64px; border-radius:14px; border:none;
+    background: linear-gradient(160deg,#fff,#ffeaf6);
+    box-shadow: 0 5px 0 var(--pink-dark);
+    font-size:30px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .memory-card.flipped{ background:#fff6c9; box-shadow:0 5px 0 var(--gold); }
+  .memory-card.matched{ background:#d9ffe0; box-shadow:0 5px 0 #4e9d4e; cursor:default; }
+
+  /* ---- Shared choice buttons: games 6, 7, 8 ---- */
+  .choice-row{
+    display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+    margin-top:14px; max-width:520px;
+  }
+  .choice-btn{
+    min-width:96px; min-height:96px; border-radius:22px; border:none;
+    background: linear-gradient(160deg,#fff,#ffeaf6);
+    box-shadow: 0 6px 0 var(--pink-dark);
+    font-size:32px; font-weight:800; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; padding:8px;
+  }
+  .choice-btn .choice-label{ font-size:13px; color:var(--ink); }
+  .choice-btn:active{ transform:translateY(5px); box-shadow:none; }
+  .choice-btn.correct{ background: linear-gradient(160deg,#daffd0,#9be89a); box-shadow:0 6px 0 #4e9d4e; }
+  .choice-btn.wrong{ background: linear-gradient(160deg,#ffd0d0,#ff9a9a); box-shadow:0 6px 0 #c94e4e; }
+  .choice-btn[disabled]{ cursor:default; }
+
+  .scenario-card{ font-size:64px; margin:10px auto; }
+  .counting-objects{
+    font-size:40px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+    margin:14px 0; min-height:52px;
+  }
+  .pattern-row{
+    font-size:44px; display:flex; gap:10px; justify-content:center;
+    margin:14px 0; align-items:center;
+  }
+  .pattern-row .blank{
+    width:60px; height:60px; border:3px dashed var(--pink); border-radius:14px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:26px; color:var(--pink-dark); font-weight:800;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <button class="icon-btn mute-btn" id="muteBtn">🔊</button>
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <h1 class="title">✨ Princess & Robot Playground ✨</h1>
+    <div class="subtitle">Let's play with AI and coding!</div>
+    <div class="char" id="homeChar">👸</div>
+    <div class="speech-bubble" id="homeBubble">Hi there! Come play with me and my robot friend Poko!</div>
+    <div class="menu-row">
+      <button class="big-btn" id="btnStartGame1">
+        <div class="emoji">🧭</div>
+        Sequence Maze
+      </button>
+      <button class="big-btn blue" id="btnStartGame2">
+        <div class="emoji">🤖</div>
+        Teach the Robot
+      </button>
+      <button class="big-btn" id="btnStartGame3">
+        <div class="emoji">🔁</div>
+        Copy the Pattern
+      </button>
+      <button class="big-btn blue" id="btnStartGame4">
+        <div class="emoji">🐛</div>
+        Find the Bug
+      </button>
+      <button class="big-btn" id="btnStartGame5">
+        <div class="emoji">🧠</div>
+        Memory Match
+      </button>
+      <button class="big-btn blue" id="btnStartGame6">
+        <div class="emoji">🔀</div>
+        If This, Then That
+      </button>
+      <button class="big-btn" id="btnStartGame7">
+        <div class="emoji">🔢</div>
+        Counting Fun
+      </button>
+      <button class="big-btn blue" id="btnStartGame8">
+        <div class="emoji">🧩</div>
+        Pattern Puzzle
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME 1: sequence maze -->
+  <div class="view" id="view-game1">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame1">🏠</button>
+      <div class="subtitle" style="margin:0;">Move 👸 to the castle</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g1Bubble">Tap the arrows to build a sequence!</div>
+
+    <div class="grid-wrap">
+      <div class="grid" id="grid"></div>
+
+      <div class="program-strip" id="programStrip"></div>
+
+      <div class="block-tray">
+        <button class="arrow-btn" data-dir="up">⬆️</button>
+        <button class="arrow-btn" data-dir="down">⬇️</button>
+        <button class="arrow-btn" data-dir="left">⬅️</button>
+        <button class="arrow-btn" data-dir="right">➡️</button>
+      </div>
+
+      <div class="ctrl-row">
+        <button class="action-btn clear" id="btnClearProgram">🔄 Reset</button>
+        <button class="action-btn go" id="btnRunProgram">▶️ Start!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME 2: AI sorting -->
+  <div class="view" id="view-game2">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame2">🏠</button>
+      <div class="subtitle" style="margin:0;">Animal or Vehicle?</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g2Bubble">Help teach Poko! Which one is this?</div>
+
+    <div class="item-card" id="currentItem">🐶</div>
+
+    <div class="sort-area">
+      <div class="basket" id="basketAnimal" ondragover="event.preventDefault()">
+        <div class="label">🐾 Animals</div>
+        <div class="items" id="itemsAnimal"></div>
+      </div>
+      <div class="basket" id="basketVehicle" ondragover="event.preventDefault()">
+        <div class="label">🚗 Vehicles</div>
+        <div class="items" id="itemsVehicle"></div>
+      </div>
+    </div>
+
+    <div class="progress-dots" id="dots"></div>
+  </div>
+
+  <!-- GAME 3: copy the pattern (loop) -->
+  <div class="view" id="view-game3">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame3">🏠</button>
+      <div class="subtitle" style="margin:0;">Copy the Pattern</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g3Bubble">Watch the pattern, then tap it back!</div>
+    <div class="simon-row" id="simonRow">
+      <button class="simon-btn c0" data-idx="0"></button>
+      <button class="simon-btn c1" data-idx="1"></button>
+      <button class="simon-btn c2" data-idx="2"></button>
+      <button class="simon-btn c3" data-idx="3"></button>
+    </div>
+    <div class="progress-dots" id="dotsG3"></div>
+  </div>
+
+  <!-- GAME 4: bug hunt (debugging) -->
+  <div class="view" id="view-game4">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame4">🏠</button>
+      <div class="subtitle" style="margin:0;">Find the Bug</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g4Bubble">One step will lead the robot the wrong way. Can you spot it?</div>
+    <div class="grid-wrap">
+      <div class="grid" id="grid4" style="grid-template-columns:repeat(3,62px); grid-template-rows:repeat(3,62px);"></div>
+      <div class="program-strip" id="programStrip4"></div>
+      <div class="ctrl-row">
+        <button class="action-btn clear" id="btnResetProgram4">🔄 Reset</button>
+        <button class="action-btn go" id="btnRunProgram4">▶️ Run</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME 5: memory match -->
+  <div class="view" id="view-game5">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame5">🏠</button>
+      <div class="subtitle" style="margin:0;">Memory Match</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g5Bubble">Find the matching pairs!</div>
+    <div class="memory-grid" id="memoryGrid"></div>
+    <div class="progress-dots" id="dotsG5"></div>
+  </div>
+
+  <!-- GAME 6: if this, then that (conditional) -->
+  <div class="view" id="view-game6">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame6">🏠</button>
+      <div class="subtitle" style="margin:0;">If This, Then That</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g6Bubble">What should Poko do?</div>
+    <div class="scenario-card" id="scenarioCard">☔</div>
+    <div class="choice-row" id="g6Choices"></div>
+    <div class="progress-dots" id="dotsG6"></div>
+  </div>
+
+  <!-- GAME 7: counting fun -->
+  <div class="view" id="view-game7">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame7">🏠</button>
+      <div class="subtitle" style="margin:0;">Counting Fun</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g7Bubble">How many?</div>
+    <div class="counting-objects" id="countingObjects"></div>
+    <div class="choice-row" id="g7Choices"></div>
+    <div class="progress-dots" id="dotsG7"></div>
+  </div>
+
+  <!-- GAME 8: pattern puzzle -->
+  <div class="view" id="view-game8">
+    <div class="top-bar">
+      <button class="icon-btn" id="btnHomeFromGame8">🏠</button>
+      <div class="subtitle" style="margin:0;">Pattern Puzzle</div>
+      <div style="width:56px;"></div>
+    </div>
+    <div class="speech-bubble" id="g8Bubble">What comes next?</div>
+    <div class="pattern-row" id="patternRow"></div>
+    <div class="choice-row" id="g8Choices"></div>
+    <div class="progress-dots" id="dotsG8"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- Speech ---------------- */
+let muted = false;
+let enVoice = null;
+function loadVoices(){
+  const voices = speechSynthesis.getVoices();
+  enVoice = voices.find(v => v.lang && v.lang.startsWith('en')) || null;
+}
+if ('speechSynthesis' in window){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+function speak(text){
+  if (muted) return;
+  if (!('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    if (enVoice) u.voice = enVoice;
+    u.rate = 0.95;
+    u.pitch = 1.15;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function toggleMute(){
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  if (muted && 'speechSynthesis' in window) speechSynthesis.cancel();
+}
+
+/* ---------------- Nav ---------------- */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){
+  showView('view-home');
+  speak("Let's play again soon!");
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    speak("Hello! I'm the Princess, and this is my robot friend Poko. Let's play together!");
+  }, 400);
+});
+
+function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+function shuffleArray(arr){
+  for (let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+/* ---------------- Celebration ---------------- */
+function celebrate(){
+  const layer = document.createElement('div');
+  layer.className = 'confetti-layer';
+  document.body.appendChild(layer);
+  const emojis = ['🎉','✨','🌟','💖','👑','🎊'];
+  for (let i=0;i<30;i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.animationDuration = (2 + Math.random()*1.5) + 's';
+    p.style.fontSize = (18 + Math.random()*20) + 'px';
+    layer.appendChild(p);
+  }
+  setTimeout(()=> layer.remove(), 3600);
+}
+
+/* ---------------- Game 1: sequence maze ---------------- */
+// 4x4 grid, 0,0 top-left. Simple fixed level.
+const SIZE = 4;
+let startPos = {r:3, c:0};
+let goalPos = {r:0, c:3};
+let walls = [{r:1,c:1},{r:2,c:2}];
+let pos = {...startPos};
+let program = [];
+let running = false;
+
+function buildGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (let r=0;r<SIZE;r++){
+    for (let c=0;c<SIZE;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = 'cell-'+r+'-'+c;
+      if (walls.some(w=>w.r===r&&w.c===c)) cell.classList.add('wall');
+      if (r===goalPos.r && c===goalPos.c){
+        cell.classList.add('goal');
+        cell.innerHTML = '🏰';
+      }
+      grid.appendChild(cell);
+    }
+  }
+  placeChar();
+}
+function placeChar(){
+  document.querySelectorAll('#grid .who').forEach(e=>e.remove());
+  const cell = document.getElementById('cell-'+pos.r+'-'+pos.c);
+  const who = document.createElement('div');
+  who.className = 'who';
+  who.textContent = '👸';
+  cell.appendChild(who);
+}
+function startGame1(){
+  pos = {...startPos};
+  program = [];
+  running = false;
+  buildGrid();
+  renderProgram();
+  showView('view-game1');
+  speak('Tap the arrow buttons to build a sequence, then press Start.');
+}
+function addStep(dir){
+  if (running) return;
+  if (program.length >= 8) return;
+  program.push(dir);
+  renderProgram();
+  const dirWord = {up:'up', down:'down', left:'left', right:'right'}[dir];
+  speak(dirWord);
+}
+function clearProgram(){
+  program = [];
+  pos = {...startPos};
+  renderProgram();
+  buildGrid();
+  speak("Let's build it again!");
+}
+function renderProgram(){
+  const strip = document.getElementById('programStrip');
+  strip.innerHTML = '';
+  const arrow = {up:'⬆️',down:'⬇️',left:'⬅️',right:'➡️'};
+  program.forEach((p,i)=>{
+    const s = document.createElement('div');
+    s.className = 'step';
+    s.id = 'step-'+i;
+    s.textContent = arrow[p];
+    strip.appendChild(s);
+  });
+}
+async function runProgram(){
+  if (running || program.length===0) return;
+  running = true;
+  pos = {...startPos};
+  buildGrid();
+  document.getElementById('g1Bubble').textContent = 'Start!';
+  speak("Start! Let's go!");
+  await sleep(500);
+  for (let i=0;i<program.length;i++){
+    const step = document.getElementById('step-'+i);
+    if (step) step.classList.add('running');
+    const dir = program[i];
+    let np = {...pos};
+    if (dir==='up') np.r -= 1;
+    if (dir==='down') np.r += 1;
+    if (dir==='left') np.c -= 1;
+    if (dir==='right') np.c += 1;
+    const inBounds = np.r>=0 && np.r<SIZE && np.c>=0 && np.c<SIZE;
+    const hitsWall = walls.some(w=>w.r===np.r && w.c===np.c);
+    if (inBounds && !hitsWall){
+      pos = np;
+      placeChar();
+    } else {
+      document.getElementById('g1Bubble').textContent = 'Oops! You hit a wall. Try again!';
+      speak('Oops! You hit a wall. Give it another try.');
+      running = false;
+      if (step) step.classList.remove('running');
+      return;
+    }
+    await sleep(450);
+    if (step) step.classList.remove('running');
+  }
+  running = false;
+  if (pos.r===goalPos.r && pos.c===goalPos.c){
+    document.getElementById('g1Bubble').textContent = 'Yay! You reached the castle! 🎉';
+    speak('Yay! You reached the castle! Great job!');
+    celebrate();
+  } else {
+    document.getElementById('g1Bubble').textContent = "So close! Let's try again.";
+    speak("So close! Let's try again.");
+  }
+}
+
+/* ---------------- Game 2: AI sorting ---------------- */
+const items = [
+  {emoji:'🐶', type:'animal'},
+  {emoji:'🚗', type:'vehicle'},
+  {emoji:'🐱', type:'animal'},
+  {emoji:'🚂', type:'vehicle'},
+  {emoji:'🐰', type:'animal'},
+  {emoji:'🚲', type:'vehicle'},
+];
+let g2index = 0;
+let g2correct = 0;
+
+function startGame2(){
+  g2index = 0;
+  g2correct = 0;
+  document.getElementById('itemsAnimal').innerHTML='';
+  document.getElementById('itemsVehicle').innerHTML='';
+  renderDots();
+  showNextItem();
+  showView('view-game2');
+  speak("Poko doesn't quite know animals from vehicles yet. Can you teach him?");
+}
+function renderDots(){
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  for (let i=0;i<items.length;i++){
+    const d = document.createElement('span');
+    if (i < g2index) d.classList.add('done');
+    dots.appendChild(d);
+  }
+}
+function showNextItem(){
+  if (g2index >= items.length){
+    document.getElementById('g2Bubble').textContent = 'Poko learned it all! Thank you! Poko is so smart now 🎉';
+    speak('Thank you for teaching me everything! Poko is so smart now!');
+    document.getElementById('currentItem').style.visibility = 'hidden';
+    celebrate();
+    return;
+  }
+  document.getElementById('currentItem').style.visibility = 'visible';
+  const it = items[g2index];
+  const card = document.getElementById('currentItem');
+  card.textContent = it.emoji;
+  card.setAttribute('draggable','true');
+  setupDrag(card, it);
+  document.getElementById('g2Bubble').textContent = 'Which one is this? Tap to choose!';
+}
+function setupDrag(card, it){
+  card.ondragstart = (e)=>{ e.dataTransfer.setData('text/plain','x'); };
+  // simple tap-to-choose alternative for touch devices without HTML5 DnD support
+  card.onclick = null;
+}
+function chooseBasket(type){
+  const it = items[g2index];
+  if (!it) return;
+  const correct = it.type === type;
+  const listId = type==='animal' ? 'itemsAnimal' : 'itemsVehicle';
+  const span = document.createElement('span');
+  span.textContent = it.emoji;
+  document.getElementById(listId).appendChild(span);
+
+  if (correct){
+    g2correct++;
+    document.getElementById('g2Bubble').textContent = 'Correct! Awesome!';
+    speak('Correct! Good job!');
+  } else {
+    document.getElementById('g2Bubble').textContent = "Not quite! That's okay, let's learn together.";
+    speak("Not quite, but that's okay. Let's learn together.");
+  }
+  g2index++;
+  renderDots();
+  setTimeout(showNextItem, 900);
+}
+document.getElementById('basketAnimal').addEventListener('click', ()=>chooseBasket('animal'));
+document.getElementById('basketVehicle').addEventListener('click', ()=>chooseBasket('vehicle'));
+document.getElementById('basketAnimal').addEventListener('drop', (e)=>{ e.preventDefault(); chooseBasket('animal'); });
+document.getElementById('basketVehicle').addEventListener('drop', (e)=>{ e.preventDefault(); chooseBasket('vehicle'); });
+
+/* ---------------- Game 3: copy the pattern (loop) ---------------- */
+const G3_ROUNDS = 4;
+let g3Sequence = [];
+let g3PlayerIndex = 0;
+let g3Round = 0;
+let g3Playing = false;
+
+function startGame3(){
+  g3Sequence = [];
+  g3Round = 0;
+  g3Playing = false;
+  renderDotsG3();
+  showView('view-game3');
+  document.getElementById('g3Bubble').textContent = 'Watch the pattern, then tap it back!';
+  speak('Watch the colors carefully, then tap them back in the same order!');
+  setTimeout(nextRoundG3, 1200);
+}
+function renderDotsG3(){
+  const dots = document.getElementById('dotsG3');
+  dots.innerHTML = '';
+  for (let i=0;i<G3_ROUNDS;i++){
+    const d = document.createElement('span');
+    if (i < g3Round) d.classList.add('done');
+    dots.appendChild(d);
+  }
+}
+function nextRoundG3(){
+  if (g3Round >= G3_ROUNDS){
+    document.getElementById('g3Bubble').textContent = 'Amazing! You copied every pattern! 🎉';
+    speak('Amazing! You copied every pattern! Great job!');
+    celebrate();
+    return;
+  }
+  g3Sequence.push(Math.floor(Math.random()*4));
+  g3PlayerIndex = 0;
+  playSequenceG3();
+}
+async function playSequenceG3(){
+  g3Playing = true;
+  document.getElementById('g3Bubble').textContent = 'Watch carefully!';
+  await sleep(600);
+  for (let i=0;i<g3Sequence.length;i++){
+    const idx = g3Sequence[i];
+    const btn = document.querySelector('.simon-btn[data-idx="'+idx+'"]');
+    if (btn) btn.classList.add('lit');
+    await sleep(450);
+    if (btn) btn.classList.remove('lit');
+    await sleep(200);
+  }
+  g3Playing = false;
+  document.getElementById('g3Bubble').textContent = 'Now you try! Tap the same order.';
+  speak('Now you try!');
+}
+function onSimonClick(idx){
+  if (g3Playing) return;
+  const btn = document.querySelector('.simon-btn[data-idx="'+idx+'"]');
+  if (g3Sequence[g3PlayerIndex] === idx){
+    if (btn){ btn.classList.add('lit'); setTimeout(()=>btn.classList.remove('lit'), 250); }
+    g3PlayerIndex++;
+    if (g3PlayerIndex >= g3Sequence.length){
+      g3Round++;
+      renderDotsG3();
+      document.getElementById('g3Bubble').textContent = 'Great job! Next pattern coming up!';
+      speak('Great job!');
+      setTimeout(nextRoundG3, 1000);
+    }
+  } else {
+    if (btn){ btn.classList.add('wrong-flash'); setTimeout(()=>btn.classList.remove('wrong-flash'), 300); }
+    document.getElementById('g3Bubble').textContent = 'Oops! Watch again.';
+    speak("Oops! Let's watch it again.");
+    setTimeout(playSequenceG3, 900);
+  }
+}
+document.querySelectorAll('.simon-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> onSimonClick(parseInt(btn.dataset.idx,10)));
+});
+
+/* ---------------- Game 4: bug hunt (debugging) ---------------- */
+const G4_SIZE = 3;
+const g4Start = {r:2, c:0};
+const g4Goal = {r:0, c:2};
+const G4_ORIGINAL_PROGRAM = ['up','down','right','right'];
+const G4_BUG_INDEX = 1;
+const G4_CORRECT_DIR = 'up';
+let g4Program = [];
+let g4Pos = {...g4Start};
+let g4Fixed = false;
+let g4Running = false;
+
+function buildGrid4(){
+  const grid = document.getElementById('grid4');
+  grid.innerHTML = '';
+  for (let r=0;r<G4_SIZE;r++){
+    for (let c=0;c<G4_SIZE;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = 'cell4-'+r+'-'+c;
+      if (r===g4Goal.r && c===g4Goal.c){
+        cell.classList.add('goal');
+        cell.innerHTML = '🏰';
+      }
+      grid.appendChild(cell);
+    }
+  }
+  placeChar4();
+}
+function placeChar4(){
+  document.querySelectorAll('#grid4 .who').forEach(e=>e.remove());
+  const cell = document.getElementById('cell4-'+g4Pos.r+'-'+g4Pos.c);
+  if (!cell) return;
+  const who = document.createElement('div');
+  who.className = 'who';
+  who.textContent = '🤖';
+  cell.appendChild(who);
+}
+function renderProgram4(){
+  const strip = document.getElementById('programStrip4');
+  strip.innerHTML = '';
+  const arrow = {up:'⬆️',down:'⬇️',left:'⬅️',right:'➡️'};
+  g4Program.forEach((p,i)=>{
+    const s = document.createElement('div');
+    s.className = 'step buggy-hint' + (i===G4_BUG_INDEX && g4Fixed ? ' fixed' : '');
+    s.id = 'step4-'+i;
+    s.textContent = arrow[p];
+    s.addEventListener('click', ()=> onStepClickG4(i));
+    strip.appendChild(s);
+  });
+}
+function startGame4(){
+  g4Program = [...G4_ORIGINAL_PROGRAM];
+  g4Pos = {...g4Start};
+  g4Fixed = false;
+  g4Running = false;
+  buildGrid4();
+  renderProgram4();
+  showView('view-game4');
+  document.getElementById('g4Bubble').textContent = 'One step will lead the robot the wrong way. Press Run to see, then tap the step you think is the bug!';
+  speak('One step in this program is wrong. Press Run to watch, then tap the step you think is the bug.');
+}
+function onStepClickG4(idx){
+  if (g4Running) return;
+  if (g4Fixed){
+    document.getElementById('g4Bubble').textContent = 'The bug is already fixed! Press Run!';
+    return;
+  }
+  const stepEl = document.getElementById('step4-'+idx);
+  if (idx === G4_BUG_INDEX){
+    g4Program[idx] = G4_CORRECT_DIR;
+    g4Fixed = true;
+    renderProgram4();
+    document.getElementById('g4Bubble').textContent = 'You found it! Great job fixing the bug. Press Run!';
+    speak('You found the bug! Great job. Now press Run.');
+  } else {
+    if (stepEl){ stepEl.classList.add('shake'); setTimeout(()=>stepEl.classList.remove('shake'), 400); }
+    document.getElementById('g4Bubble').textContent = 'That step looks okay. Keep looking!';
+    speak('That step looks okay. Keep looking for the bug.');
+  }
+}
+async function runProgram4(){
+  if (g4Running) return;
+  g4Running = true;
+  g4Pos = {...g4Start};
+  buildGrid4();
+  document.getElementById('g4Bubble').textContent = 'Running...';
+  speak('Here we go!');
+  await sleep(500);
+  for (let i=0;i<g4Program.length;i++){
+    const step = document.getElementById('step4-'+i);
+    if (step) step.classList.add('running');
+    const dir = g4Program[i];
+    let np = {...g4Pos};
+    if (dir==='up') np.r -= 1;
+    if (dir==='down') np.r += 1;
+    if (dir==='left') np.c -= 1;
+    if (dir==='right') np.c += 1;
+    const inBounds = np.r>=0 && np.r<G4_SIZE && np.c>=0 && np.c<G4_SIZE;
+    if (inBounds){
+      g4Pos = np;
+      placeChar4();
+    }
+    await sleep(450);
+    if (step) step.classList.remove('running');
+  }
+  g4Running = false;
+  if (g4Pos.r === g4Goal.r && g4Pos.c === g4Goal.c){
+    document.getElementById('g4Bubble').textContent = 'The robot made it! Bug squashed! 🎉';
+    speak('The robot made it! You squashed the bug!');
+    celebrate();
+  } else if (!g4Fixed){
+    document.getElementById('g4Bubble').textContent = "Hmm, the robot didn't make it! One step goes the wrong way — tap the buggy step!";
+    speak("Hmm, the robot didn't make it. One step goes the wrong way. Tap the step you think is the bug.");
+  } else {
+    document.getElementById('g4Bubble').textContent = 'So close! Try Reset and Run again.';
+    speak('So close! Try again.');
+  }
+}
+function resetGame4(){
+  g4Program = [...G4_ORIGINAL_PROGRAM];
+  g4Pos = {...g4Start};
+  g4Fixed = false;
+  g4Running = false;
+  buildGrid4();
+  renderProgram4();
+  document.getElementById('g4Bubble').textContent = 'One step will lead the robot the wrong way. Press Run to see, then tap the step you think is the bug!';
+  speak("Let's try again!");
+}
+
+/* ---------------- Game 5: memory match ---------------- */
+const G5_EMOJIS = ['🍎','🍌','🍇','🍉','🍓','🍒'];
+let g5Cards = [];
+let g5Flipped = [];
+let g5Lock = false;
+let g5Pairs = 0;
+
+function startGame5(){
+  const deck = shuffleArray([...G5_EMOJIS, ...G5_EMOJIS].map((e,i)=>({id:i, emoji:e, matched:false})));
+  g5Cards = deck;
+  g5Flipped = [];
+  g5Lock = false;
+  g5Pairs = 0;
+  renderDotsG5();
+  renderMemoryGrid();
+  showView('view-game5');
+  document.getElementById('g5Bubble').textContent = 'Find the matching pairs!';
+  speak('Find the matching pairs! Tap two cards to flip them.');
+}
+function renderDotsG5(){
+  const dots = document.getElementById('dotsG5');
+  dots.innerHTML = '';
+  for (let i=0;i<G5_EMOJIS.length;i++){
+    const d = document.createElement('span');
+    if (i < g5Pairs) d.classList.add('done');
+    dots.appendChild(d);
+  }
+}
+function renderMemoryGrid(){
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  g5Cards.forEach((card, idx)=>{
+    const el = document.createElement('button');
+    const faceUp = card.matched || g5Flipped.includes(idx);
+    el.className = 'memory-card' + (card.matched ? ' matched' : '') + (faceUp && !card.matched ? ' flipped' : '');
+    el.textContent = faceUp ? card.emoji : '❔';
+    el.addEventListener('click', ()=> onCardClickG5(idx));
+    grid.appendChild(el);
+  });
+}
+function onCardClickG5(idx){
+  if (g5Lock) return;
+  const card = g5Cards[idx];
+  if (card.matched || g5Flipped.includes(idx)) return;
+  g5Flipped.push(idx);
+  renderMemoryGrid();
+  if (g5Flipped.length === 2){
+    g5Lock = true;
+    const a = g5Flipped[0];
+    const b = g5Flipped[1];
+    if (g5Cards[a].emoji === g5Cards[b].emoji){
+      g5Cards[a].matched = true;
+      g5Cards[b].matched = true;
+      g5Pairs++;
+      renderDotsG5();
+      document.getElementById('g5Bubble').textContent = 'Great match!';
+      speak('Great match!');
+      g5Flipped = [];
+      g5Lock = false;
+      renderMemoryGrid();
+      if (g5Pairs === G5_EMOJIS.length){
+        document.getElementById('g5Bubble').textContent = 'You found every pair! 🎉';
+        speak('You found every pair! Amazing memory!');
+        celebrate();
+      }
+    } else {
+      document.getElementById('g5Bubble').textContent = 'Not a match, try again!';
+      speak('Not a match. Try again!');
+      setTimeout(()=>{ g5Flipped = []; g5Lock = false; renderMemoryGrid(); }, 800);
+    }
+  }
+}
+
+/* ---------------- Game 6: if this, then that (conditional) ---------------- */
+const G6_SCENARIOS = [
+  { emoji:'☔', text:"It's raining! What should Poko do?", correct:'umbrella',
+    options: [
+      { id:'umbrella', emoji:'☂️', label:'Take an umbrella' },
+      { id:'sunglasses', emoji:'🕶️', label:'Wear sunglasses' },
+      { id:'icecream', emoji:'🍦', label:'Eat ice cream outside' }
+    ]},
+  { emoji:'☀️', text:"It's sunny and bright! What should Poko do?", correct:'sunglasses',
+    options: [
+      { id:'umbrella', emoji:'☂️', label:'Take an umbrella' },
+      { id:'sunglasses', emoji:'🕶️', label:'Wear sunglasses' },
+      { id:'snowman', emoji:'⛄', label:'Build a snowman' }
+    ]},
+  { emoji:'❄️', text:"It's snowing and cold! What should Poko do?", correct:'mittens',
+    options: [
+      { id:'mittens', emoji:'🧤', label:'Wear warm mittens' },
+      { id:'sunglasses', emoji:'🕶️', label:'Wear sunglasses' },
+      { id:'swim', emoji:'🩱', label:'Go swimming' }
+    ]},
+  { emoji:'🍽️', text:'Poko is hungry! What should Poko do?', correct:'eat',
+    options: [
+      { id:'eat', emoji:'🍎', label:'Eat some food' },
+      { id:'umbrella', emoji:'☂️', label:'Take an umbrella' },
+      { id:'sleep', emoji:'😴', label:'Go to sleep' }
+    ]},
+  { emoji:'🌙', text:'It is nighttime and Poko is sleepy! What should Poko do?', correct:'sleep',
+    options: [
+      { id:'sleep', emoji:'😴', label:'Go to sleep' },
+      { id:'sunglasses', emoji:'🕶️', label:'Wear sunglasses' },
+      { id:'eat', emoji:'🍎', label:'Eat an apple' }
+    ]}
+];
+let g6Index = 0;
+let g6Correct = 0;
+
+function startGame6(){
+  g6Index = 0;
+  g6Correct = 0;
+  renderDotsG6();
+  showScenarioG6();
+  showView('view-game6');
+  speak("Let's help Poko decide what to do! If this happens, then Poko should...");
+}
+function renderDotsG6(){
+  const dots = document.getElementById('dotsG6');
+  dots.innerHTML = '';
+  for (let i=0;i<G6_SCENARIOS.length;i++){
+    const d = document.createElement('span');
+    if (i < g6Index) d.classList.add('done');
+    dots.appendChild(d);
+  }
+}
+function showScenarioG6(){
+  if (g6Index >= G6_SCENARIOS.length){
+    document.getElementById('scenarioCard').textContent = '🏆';
+    document.getElementById('g6Bubble').textContent = 'You helped Poko make great choices every time! 🎉';
+    document.getElementById('g6Choices').innerHTML = '';
+    speak('You helped Poko make great choices every time!');
+    celebrate();
+    return;
+  }
+  const scenario = G6_SCENARIOS[g6Index];
+  document.getElementById('scenarioCard').textContent = scenario.emoji;
+  document.getElementById('g6Bubble').textContent = scenario.text;
+  speak(scenario.text);
+  const choicesEl = document.getElementById('g6Choices');
+  choicesEl.innerHTML = '';
+  const shuffled = shuffleArray([...scenario.options]);
+  shuffled.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<div>'+opt.emoji+'</div><div class="choice-label">'+opt.label+'</div>';
+    btn.addEventListener('click', ()=> chooseG6(opt.id, btn, scenario));
+    choicesEl.appendChild(btn);
+  });
+}
+function chooseG6(optionId, btnEl, scenario){
+  const buttons = document.querySelectorAll('#g6Choices .choice-btn');
+  buttons.forEach(b=> b.disabled = true);
+  if (optionId === scenario.correct){
+    btnEl.classList.add('correct');
+    g6Correct++;
+    document.getElementById('g6Bubble').textContent = "Yes! That's exactly right!";
+    speak("Yes! That's exactly right!");
+  } else {
+    btnEl.classList.add('wrong');
+    document.getElementById('g6Bubble').textContent = "Good try! Let's remember for next time.";
+    speak("Good try. Let's remember for next time.");
+  }
+  g6Index++;
+  renderDotsG6();
+  setTimeout(showScenarioG6, 1200);
+}
+
+/* ---------------- Game 7: counting fun ---------------- */
+let G7_ROUNDS = [];
+let g7Index = 0;
+let g7Correct = 0;
+
+const G7_TOTAL = 50;
+function buildRoundsG7(){
+  const rounds = [];
+  for (let i=0;i<G7_TOTAL;i++){
+    if (i % 2 === 0){
+      const count = 2 + Math.floor(Math.random()*4); // 2..5
+      rounds.push({ type:'count', count:count, prompt:'How many stars?', answer:count });
+    } else {
+      const a = 1 + Math.floor(Math.random()*3);
+      const b = 1 + Math.floor(Math.random()*3);
+      rounds.push({ type:'add', a:a, b:b, prompt: a+' + '+b+' = ?', answer:a+b });
+    }
+  }
+  return rounds;
+}
+function startGame7(){
+  G7_ROUNDS = buildRoundsG7();
+  g7Index = 0;
+  g7Correct = 0;
+  const dotsEl = document.getElementById('dotsG7');
+  dotsEl.classList.add('progress-text');
+  renderDotsG7();
+  showRoundG7();
+  showView('view-game7');
+  speak("Let's count and add together! There are fifty questions, so let's get started!");
+}
+function renderDotsG7(){
+  const dots = document.getElementById('dotsG7');
+  const current = Math.min(g7Index+1, G7_ROUNDS.length);
+  dots.textContent = 'Question ' + current + ' of ' + G7_ROUNDS.length;
+}
+function showRoundG7(){
+  if (g7Index >= G7_ROUNDS.length){
+    document.getElementById('countingObjects').innerHTML = '';
+    document.getElementById('g7Bubble').textContent = 'You counted everything perfectly! 🎉';
+    document.getElementById('g7Choices').innerHTML = '';
+    document.getElementById('dotsG7').textContent = 'All ' + G7_ROUNDS.length + ' questions complete! Score: ' + g7Correct + '/' + G7_ROUNDS.length;
+    speak('You counted everything perfectly! Great job!');
+    celebrate();
+    return;
+  }
+  const round = G7_ROUNDS[g7Index];
+  const objEl = document.getElementById('countingObjects');
+  if (round.type === 'count'){
+    objEl.textContent = '⭐'.repeat(round.count);
+  } else {
+    objEl.textContent = '⭐'.repeat(round.a) + '  +  ' + '⭐'.repeat(round.b);
+  }
+  document.getElementById('g7Bubble').textContent = round.prompt;
+  speak(round.prompt.replace('?', ''));
+  const choicesEl = document.getElementById('g7Choices');
+  choicesEl.innerHTML = '';
+  const options = new Set([round.answer]);
+  let guard = 0;
+  while (options.size < 3 && guard < 20){
+    guard++;
+    const candidate = Math.max(1, Math.min(10, round.answer + (Math.floor(Math.random()*5) - 2)));
+    options.add(candidate);
+  }
+  const shuffled = shuffleArray([...options]);
+  shuffled.forEach(num=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = num;
+    btn.addEventListener('click', ()=> chooseG7(num, btn, round.answer));
+    choicesEl.appendChild(btn);
+  });
+}
+function chooseG7(num, btnEl, answer){
+  const buttons = document.querySelectorAll('#g7Choices .choice-btn');
+  buttons.forEach(b=> b.disabled = true);
+  if (num === answer){
+    btnEl.classList.add('correct');
+    g7Correct++;
+    document.getElementById('g7Bubble').textContent = 'Correct! Well done!';
+    speak('Correct! Well done!');
+  } else {
+    btnEl.classList.add('wrong');
+    document.getElementById('g7Bubble').textContent = 'Almost! The answer was ' + answer + '.';
+    speak('Almost! The answer was ' + answer + '.');
+  }
+  g7Index++;
+  renderDotsG7();
+  setTimeout(showRoundG7, 1200);
+}
+
+/* ---------------- Game 8: pattern puzzle ---------------- */
+const G8_ROUNDS = [
+  { sequence:['🔴','🔵','🔴','🔵'], answer:'🔴', choices:['🔴','🔵','🟡'] },
+  { sequence:['🟡','🟡','🟢','🟢'], answer:'🟡', choices:['🟡','🟢','🔵'] },
+  { sequence:['🔺','🔵','🔺','🔵','🔺'], answer:'🔵', choices:['🔵','🔺','🟢'] },
+  { sequence:['🟢','🟢','🔵','🟢','🟢'], answer:'🔵', choices:['🔵','🟢','🔴'] },
+  { sequence:['⭐','🌙','⭐','🌙'], answer:'⭐', choices:['⭐','🌙','☀️'] }
+];
+let g8Index = 0;
+let g8Correct = 0;
+
+function startGame8(){
+  g8Index = 0;
+  g8Correct = 0;
+  renderDotsG8();
+  showRoundG8();
+  showView('view-game8');
+  speak("Let's finish the pattern! What comes next?");
+}
+function renderDotsG8(){
+  const dots = document.getElementById('dotsG8');
+  dots.innerHTML = '';
+  for (let i=0;i<G8_ROUNDS.length;i++){
+    const d = document.createElement('span');
+    if (i < g8Index) d.classList.add('done');
+    dots.appendChild(d);
+  }
+}
+function showRoundG8(){
+  if (g8Index >= G8_ROUNDS.length){
+    document.getElementById('patternRow').innerHTML = '';
+    document.getElementById('g8Bubble').textContent = 'You completed every pattern! 🎉';
+    document.getElementById('g8Choices').innerHTML = '';
+    speak('You completed every pattern! Wonderful work!');
+    celebrate();
+    return;
+  }
+  const round = G8_ROUNDS[g8Index];
+  const rowEl = document.getElementById('patternRow');
+  rowEl.innerHTML = '';
+  round.sequence.forEach(sym=>{
+    const span = document.createElement('span');
+    span.textContent = sym;
+    rowEl.appendChild(span);
+  });
+  const blank = document.createElement('span');
+  blank.className = 'blank';
+  blank.textContent = '?';
+  rowEl.appendChild(blank);
+  document.getElementById('g8Bubble').textContent = 'What comes next in the pattern?';
+  speak('What comes next in the pattern?');
+  const choicesEl = document.getElementById('g8Choices');
+  choicesEl.innerHTML = '';
+  const shuffled = shuffleArray([...round.choices]);
+  shuffled.forEach(sym=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = sym;
+    btn.addEventListener('click', ()=> chooseG8(sym, btn, round.answer));
+    choicesEl.appendChild(btn);
+  });
+}
+function chooseG8(sym, btnEl, answer){
+  const buttons = document.querySelectorAll('#g8Choices .choice-btn');
+  buttons.forEach(b=> b.disabled = true);
+  if (sym === answer){
+    btnEl.classList.add('correct');
+    g8Correct++;
+    document.getElementById('g8Bubble').textContent = 'Perfect! You found the pattern!';
+    speak('Perfect! You found the pattern!');
+  } else {
+    btnEl.classList.add('wrong');
+    document.getElementById('g8Bubble').textContent = 'Not quite! Look at the pattern again.';
+    speak('Not quite. Look at the pattern again.');
+  }
+  g8Index++;
+  renderDotsG8();
+  setTimeout(showRoundG8, 1200);
+}
+
+/* ---------------- Wire up buttons (avoid inline onclick attrs) ---------------- */
+document.getElementById('muteBtn').addEventListener('click', toggleMute);
+document.getElementById('btnStartGame1').addEventListener('click', startGame1);
+document.getElementById('btnStartGame2').addEventListener('click', startGame2);
+document.getElementById('btnStartGame3').addEventListener('click', startGame3);
+document.getElementById('btnStartGame4').addEventListener('click', startGame4);
+document.getElementById('btnStartGame5').addEventListener('click', startGame5);
+document.getElementById('btnStartGame6').addEventListener('click', startGame6);
+document.getElementById('btnStartGame7').addEventListener('click', startGame7);
+document.getElementById('btnStartGame8').addEventListener('click', startGame8);
+document.getElementById('btnHomeFromGame1').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame2').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame3').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame4').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame5').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame6').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame7').addEventListener('click', goHome);
+document.getElementById('btnHomeFromGame8').addEventListener('click', goHome);
+document.getElementById('btnClearProgram').addEventListener('click', clearProgram);
+document.getElementById('btnRunProgram').addEventListener('click', runProgram);
+document.getElementById('btnRunProgram4').addEventListener('click', runProgram4);
+document.getElementById('btnResetProgram4').addEventListener('click', resetGame4);
+document.querySelectorAll('.arrow-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> addStep(btn.dataset.dir));
+});
+
+buildGrid();
+</script>
+</body>
+</html>
