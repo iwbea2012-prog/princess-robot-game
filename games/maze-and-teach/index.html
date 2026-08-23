@@ -212,10 +212,10 @@
 
   /* ---- Game 2: sorting ---- */
   .sort-area{
-    display:flex; gap:14px; width:100%; max-width:520px; justify-content:center; margin-top:6px;
+    display:flex; gap:10px; width:100%; max-width:620px; justify-content:center; margin-top:6px; flex-wrap:wrap;
   }
   .basket{
-    flex:1;
+    flex:1 1 150px;
     min-height: 120px;
     background:#fff;
     border-radius: 22px;
@@ -343,10 +343,9 @@
       <div class="program-strip" id="programStrip"></div>
 
       <div class="block-tray">
-        <button class="arrow-btn" onclick="addStep('up')">⬆️</button>
-        <button class="arrow-btn" onclick="addStep('down')">⬇️</button>
-        <button class="arrow-btn" onclick="addStep('left')">⬅️</button>
-        <button class="arrow-btn" onclick="addStep('right')">➡️</button>
+        <button class="arrow-btn" onclick="addStep('forward')">⬆️</button>
+        <button class="arrow-btn" onclick="addStep('turnLeft')">↩️</button>
+        <button class="arrow-btn" onclick="addStep('turnRight')">↪️</button>
       </div>
 
       <div class="ctrl-row">
@@ -376,6 +375,10 @@
         <div class="label" id="basketVehicleLabel"></div>
         <div class="items" id="itemsVehicle"></div>
       </div>
+      <div class="basket" id="basketFood">
+        <div class="label" id="basketFoodLabel"></div>
+        <div class="items" id="itemsFood"></div>
+      </div>
     </div>
 
     <div class="progress-wrap">
@@ -399,7 +402,7 @@ const T = {
     goHomeSpeak: 'また あそぼうね！',
     level: 'レベル',
     g1Subtitle: '👸 を おしろまで うごかそう',
-    g1Intro: 'やじるしを タップして じゅんばんを つくってね！',
+    g1Intro: 'ボタンを タップして じゅんばんを つくってね！ むいている ほうこうに すすむよ！',
     g1Clear: '🔄 やりなおし',
     g1Go: '▶️ スタート！',
     g1ClearSpeak: 'もういちど つくってみよう！',
@@ -409,15 +412,16 @@ const T = {
     g1Success: 'やったね！ おしろに とうちゃく！ 🎉',
     g1NextSpeak: 'つぎの レベルに いくよ！',
     g1AllDone: 'ぜんぶの 20レベル クリアしたね！ すごい！ 🎉',
-    dirs: { up:'うえ', down:'した', left:'ひだり', right:'みぎ' },
-    g2Subtitle: 'どうぶつ？ のりもの？',
-    g2Intro: 'ぽこは まだ どうぶつと のりものが よく わからないの。 おしえてくれる？',
-    g2Item: 'これは どっちかな？ タップして えらんでね。',
+    actions: { forward:'まえに すすむ', turnLeft:'ひだりを むく', turnRight:'みぎを むく' },
+    g2Subtitle: 'どうぶつ？ のりもの？ たべもの？',
+    g2Intro: 'ぽこは まだ どうぶつと のりものと たべものが よく わからないの。 おしえてくれる？',
+    g2Item: 'これは どれかな？ タップして えらんでね。',
     g2Correct: 'せいかい！ すごい！',
     g2Incorrect: 'おしい！ でも だいじょうぶ、 いっしょに おぼえよう。',
-    g2AllDone: 'ぜんぶの 20もん おしえてくれて ありがとう！ ぽこは かしこくなったよ 🎉',
+    g2AllDone: 'ぜんぶの {n}もん おしえてくれて ありがとう！ ぽこは かしこくなったよ 🎉',
     basketAnimal: '🐾 どうぶつ',
     basketVehicle: '🚗 のりもの',
+    basketFood: '🍎 たべもの',
     langSwitchSpeak: 'にほんごに したよ'
   },
   en: {
@@ -430,7 +434,7 @@ const T = {
     goHomeSpeak: "Let's play again soon!",
     level: 'Level',
     g1Subtitle: 'Move the princess to the castle',
-    g1Intro: 'Tap the arrows to build the sequence!',
+    g1Intro: 'Tap the buttons to build the sequence! You move in the direction you are facing!',
     g1Clear: '🔄 Retry',
     g1Go: '▶️ Start!',
     g1ClearSpeak: "Let's build it again!",
@@ -440,15 +444,16 @@ const T = {
     g1Success: 'Yay! You reached the castle! 🎉',
     g1NextSpeak: 'On to the next level!',
     g1AllDone: 'You cleared all 20 levels! Amazing! 🎉',
-    dirs: { up:'up', down:'down', left:'left', right:'right' },
-    g2Subtitle: 'Animal or Vehicle?',
-    g2Intro: "Poko doesn't know animals from vehicles yet. Can you teach him?",
+    actions: { forward:'move forward', turnLeft:'turn left', turnRight:'turn right' },
+    g2Subtitle: 'Animal, Vehicle, or Food?',
+    g2Intro: "Poko doesn't know animals, vehicles, and food apart yet. Can you teach him?",
     g2Item: 'Which one is this? Tap to choose!',
     g2Correct: 'Correct! Great job!',
     g2Incorrect: "Not quite! That's okay, let's learn together.",
-    g2AllDone: 'Thank you for teaching me all 20! Poko got smarter! 🎉',
+    g2AllDone: 'Thank you for teaching me all {n}! Poko got smarter! 🎉',
     basketAnimal: '🐾 Animals',
     basketVehicle: '🚗 Vehicles',
+    basketFood: '🍎 Food',
     langSwitchSpeak: 'Switched to English!'
   }
 };
@@ -522,6 +527,7 @@ function applyStaticText(){
   document.getElementById('g2Subtitle').textContent = S.g2Subtitle;
   document.getElementById('basketAnimalLabel').textContent = S.basketAnimal;
   document.getElementById('basketVehicleLabel').textContent = S.basketVehicle;
+  document.getElementById('basketFoodLabel').textContent = S.basketFood;
   if (document.getElementById('view-game2').classList.contains('active')){
     document.getElementById('g2Bubble').textContent = S.g2Item;
   }
@@ -608,10 +614,23 @@ function buildLevels(){
   return levels;
 }
 const LEVELS = buildLevels();
+const START_DIR = 1; // always start facing right (east); player must turn as needed
+const MAX_PROGRAM = 14;
+const DIRS = [[0,-1],[1,0],[0,1],[-1,0]]; // up, right, down, left (dx,dy)
+
+function shuffleArray(arr){
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+let playOrder = shuffleArray(Array.from({length:TOTAL_LEVELS}, (_,i)=>i));
 
 let levelIndex = 0;
 let startPos, goalPos, walls;
-let pos;
+let pos, dir;
 let program = [];
 let running = false;
 
@@ -619,11 +638,12 @@ function updateLevelBadge(){
   document.getElementById('g1LevelBadge').textContent = T[lang].level + ' ' + (levelIndex+1) + ' / ' + TOTAL_LEVELS;
 }
 function loadLevel(i){
-  const lvl = LEVELS[i];
+  const lvl = LEVELS[playOrder[i]];
   startPos = {...lvl.start};
   goalPos = {...lvl.goal};
   walls = lvl.walls.map(w=>({...w}));
   pos = {...startPos};
+  dir = START_DIR;
   program = [];
   buildGrid();
   renderProgram();
@@ -654,9 +674,11 @@ function placeChar(){
   const who = document.createElement('div');
   who.className = 'who';
   who.textContent = '👸';
+  who.style.transform = 'rotate(' + (dir*90) + 'deg)';
   cell.appendChild(who);
 }
 function startGame1(){
+  playOrder = shuffleArray(Array.from({length:TOTAL_LEVELS}, (_,i)=>i));
   levelIndex = 0;
   loadLevel(levelIndex);
   document.getElementById('g1Bubble').textContent = T[lang].g1Intro;
@@ -666,17 +688,18 @@ function startGame1(){
 function setControlsEnabled(on){
   document.querySelectorAll('#view-game1 .arrow-btn, #g1GoBtn, #g1ClearBtn').forEach(b=>{ b.disabled = !on; });
 }
-function addStep(dir){
+function addStep(action){
   if (running) return;
-  if (program.length >= 8) return;
-  program.push(dir);
+  if (program.length >= MAX_PROGRAM) return;
+  program.push(action);
   renderProgram();
-  speak(T[lang].dirs[dir]);
+  speak(T[lang].actions[action]);
 }
 function clearProgram(){
   if (running) return;
   program = [];
   pos = {...startPos};
+  dir = START_DIR;
   renderProgram();
   buildGrid();
   speak(T[lang].g1ClearSpeak);
@@ -684,12 +707,12 @@ function clearProgram(){
 function renderProgram(){
   const strip = document.getElementById('programStrip');
   strip.innerHTML = '';
-  const arrow = {up:'⬆️',down:'⬇️',left:'⬅️',right:'➡️'};
+  const icon = {forward:'⬆️',turnLeft:'↩️',turnRight:'↪️'};
   program.forEach((p,i)=>{
     const s = document.createElement('div');
     s.className = 'step';
     s.id = 'step-'+i;
-    s.textContent = arrow[p];
+    s.textContent = icon[p];
     strip.appendChild(s);
   });
 }
@@ -700,6 +723,7 @@ async function runProgram(){
   running = true;
   setControlsEnabled(false);
   pos = {...startPos};
+  dir = START_DIR;
   buildGrid();
   document.getElementById('g1Bubble').textContent = T[lang].g1StartSpeak;
   speak(T[lang].g1StartSpeak);
@@ -708,23 +732,28 @@ async function runProgram(){
   for (let i=0;i<program.length;i++){
     const step = document.getElementById('step-'+i);
     if (step) step.classList.add('running');
-    const dir = program[i];
-    let np = {...pos};
-    if (dir==='up') np.r -= 1;
-    if (dir==='down') np.r += 1;
-    if (dir==='left') np.c -= 1;
-    if (dir==='right') np.c += 1;
-    const inBounds = np.r>=0 && np.r<SIZE && np.c>=0 && np.c<SIZE;
-    const hitsWall = walls.some(w=>w.r===np.r && w.c===np.c);
-    if (inBounds && !hitsWall){
-      pos = np;
+    const action = program[i];
+    if (action === 'turnLeft'){
+      dir = (dir+3)%4;
+      placeChar();
+    } else if (action === 'turnRight'){
+      dir = (dir+1)%4;
       placeChar();
     } else {
-      document.getElementById('g1Bubble').textContent = T[lang].g1WallHit;
-      speak(T[lang].g1WallHit);
-      hitWall = true;
-      if (step) step.classList.remove('running');
-      break;
+      const d = DIRS[dir];
+      const np = { r: pos.r + d[1], c: pos.c + d[0] };
+      const inBounds = np.r>=0 && np.r<SIZE && np.c>=0 && np.c<SIZE;
+      const hitsWall = walls.some(w=>w.r===np.r && w.c===np.c);
+      if (inBounds && !hitsWall){
+        pos = np;
+        placeChar();
+      } else {
+        document.getElementById('g1Bubble').textContent = T[lang].g1WallHit;
+        speak(T[lang].g1WallHit);
+        hitWall = true;
+        if (step) step.classList.remove('running');
+        break;
+      }
     }
     await sleep(450);
     if (step) step.classList.remove('running');
@@ -756,35 +785,48 @@ async function runProgram(){
   }
 }
 
-/* ---------------- Game 2: AI sorting (20 items) ---------------- */
+/* ---------------- Game 2: AI sorting (30 items, 3 categories) ---------------- */
 const ITEMS = [
   {emoji:'🐶', type:'animal'},
-  {emoji:'🚗', type:'vehicle'},
   {emoji:'🐱', type:'animal'},
-  {emoji:'🚂', type:'vehicle'},
   {emoji:'🐰', type:'animal'},
-  {emoji:'🚲', type:'vehicle'},
   {emoji:'🐻', type:'animal'},
-  {emoji:'🚌', type:'vehicle'},
   {emoji:'🐼', type:'animal'},
-  {emoji:'🚀', type:'vehicle'},
   {emoji:'🦁', type:'animal'},
-  {emoji:'⛵', type:'vehicle'},
   {emoji:'🐸', type:'animal'},
-  {emoji:'🚁', type:'vehicle'},
   {emoji:'🐵', type:'animal'},
-  {emoji:'🚕', type:'vehicle'},
   {emoji:'🐷', type:'animal'},
-  {emoji:'🚓', type:'vehicle'},
   {emoji:'🐨', type:'animal'},
+  {emoji:'🚗', type:'vehicle'},
+  {emoji:'🚂', type:'vehicle'},
+  {emoji:'🚲', type:'vehicle'},
+  {emoji:'🚌', type:'vehicle'},
+  {emoji:'🚀', type:'vehicle'},
+  {emoji:'⛵', type:'vehicle'},
+  {emoji:'🚁', type:'vehicle'},
+  {emoji:'🚕', type:'vehicle'},
+  {emoji:'🚓', type:'vehicle'},
   {emoji:'✈️', type:'vehicle'},
+  {emoji:'🍎', type:'food'},
+  {emoji:'🍌', type:'food'},
+  {emoji:'🍕', type:'food'},
+  {emoji:'🍔', type:'food'},
+  {emoji:'🍙', type:'food'},
+  {emoji:'🍰', type:'food'},
+  {emoji:'🍇', type:'food'},
+  {emoji:'🍓', type:'food'},
+  {emoji:'🍞', type:'food'},
+  {emoji:'🍩', type:'food'},
 ];
 let g2index = 0;
+let g2Order = [];
 
 function startGame2(){
   g2index = 0;
+  g2Order = shuffleArray(ITEMS.map((_,i)=>i));
   document.getElementById('itemsAnimal').innerHTML='';
   document.getElementById('itemsVehicle').innerHTML='';
+  document.getElementById('itemsFood').innerHTML='';
   updateG2Progress();
   showNextItem();
   showView('view-game2');
@@ -798,22 +840,23 @@ function updateG2Progress(){
 }
 function showNextItem(){
   if (g2index >= ITEMS.length){
-    document.getElementById('g2Bubble').textContent = T[lang].g2AllDone;
-    speak(T[lang].g2AllDone);
+    const doneMsg = T[lang].g2AllDone.replace('{n}', ITEMS.length);
+    document.getElementById('g2Bubble').textContent = doneMsg;
+    speak(doneMsg);
     document.getElementById('currentItem').style.visibility = 'hidden';
     celebrate(true);
     return;
   }
   document.getElementById('currentItem').style.visibility = 'visible';
-  const it = ITEMS[g2index];
+  const it = ITEMS[g2Order[g2index]];
   document.getElementById('currentItem').textContent = it.emoji;
   document.getElementById('g2Bubble').textContent = T[lang].g2Item;
 }
 function chooseBasket(type){
-  const it = ITEMS[g2index];
+  const it = ITEMS[g2Order[g2index]];
   if (!it) return;
   const correct = it.type === type;
-  const listId = type==='animal' ? 'itemsAnimal' : 'itemsVehicle';
+  const listId = type==='animal' ? 'itemsAnimal' : (type==='vehicle' ? 'itemsVehicle' : 'itemsFood');
   const span = document.createElement('span');
   span.textContent = it.emoji;
   document.getElementById(listId).appendChild(span);
@@ -831,6 +874,7 @@ function chooseBasket(type){
 }
 document.getElementById('basketAnimal').addEventListener('click', ()=>chooseBasket('animal'));
 document.getElementById('basketVehicle').addEventListener('click', ()=>chooseBasket('vehicle'));
+document.getElementById('basketFood').addEventListener('click', ()=>chooseBasket('food'));
 
 /* ---------------- Celebration ---------------- */
 function celebrate(big){

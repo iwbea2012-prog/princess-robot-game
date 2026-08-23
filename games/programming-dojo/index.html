@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>気功道場プログラミング</title>
+<title>きこうどうじょう ぷろぐらみんぐ</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -139,21 +139,21 @@
 <!-- ===== Title Screen ===== -->
 <div id="screenTitle" class="screen">
   <div class="titleLogo">⚡🥋⚡</div>
-  <div class="titleMain">気功道場プログラミング</div>
+  <div class="titleMain">きこうどうじょう ぷろぐらみんぐ</div>
   <div class="titleSub">
-    修行の里で「プログラミングの考え方」を身につけよう。<br>
-    順次実行・くり返し・条件分岐・条件くり返し・変数・関数・デバッグ ―<br>
-    22の試練を乗り越え、最強の「気」の使い手を目指せ！
+    しゅぎょうの さとで 「ぷろぐらみんぐの かんがえかた」を みにつけよう。<br>
+    じゅんじじっこう、くりかえし、じょうけんぶんき、じょうけんくりかえし、へんすう、かんすう、でばっぐ ―<br>
+    22の しれんを のりこえて、さいきょうの 「き」の つかいてを めざせ！
   </div>
   <button class="bigBtn" id="btnStartGame">はじめる</button>
-  <button class="smallBtn" id="btnShowSelect">ステージ一覧</button>
+  <button class="smallBtn" id="btnShowSelect">すてえじ いちらん</button>
 </div>
 
 <!-- ===== Stage Select ===== -->
 <div id="screenSelect" class="screen">
   <div class="selectHeader">
-    <button class="smallBtn" id="btnSelectBack">← タイトルへ</button>
-    <h2 style="margin:0;">ステージ一覧</h2>
+    <button class="smallBtn" id="btnSelectBack">← たいとるへ</button>
+    <h2 style="margin:0;">すてえじ いちらん</h2>
   </div>
   <div class="selectWrap">
     <div id="selectList"></div>
@@ -163,38 +163,38 @@
 <!-- ===== Play Screen ===== -->
 <div id="screenPlay" class="screen">
   <div class="playHeader">
-    <button class="smallBtn" id="btnPlayBack">← ステージ一覧</button>
+    <button class="smallBtn" id="btnPlayBack">← すてえじ いちらん</button>
     <div id="statusBar"></div>
     <button class="smallBtn" id="btnSpeed">▶ ふつう</button>
     <button class="smallBtn" id="btnMute">🔊</button>
-    <button class="smallBtn" id="btnReload">🔄 やり直す</button>
+    <button class="smallBtn" id="btnReload">🔄 やりなおす</button>
   </div>
   <div class="playWrap">
     <div class="leftCol">
       <div class="panelBox">
-        <h3>フィールド</h3>
+        <h3>ふぃいるど</h3>
         <div id="gridView"></div>
       </div>
       <div class="panelBox">
-        <h3>じっこうログ</h3>
+        <h3>じっこう ろぐ</h3>
         <div id="logPanel"></div>
       </div>
     </div>
     <div class="rightCol">
       <div class="panelBox">
         <div class="runControls">
-          <button id="btnRun">▶ 実行</button>
-          <button id="btnReset">⏸ リセット</button>
-          <button id="btnClear">🗑 全消去</button>
+          <button id="btnRun">▶ じっこう</button>
+          <button id="btnReset">⏸ りせっと</button>
+          <button id="btnClear">🗑 ぜんぶけす</button>
         </div>
-        <h3>命令パレット</h3>
+        <h3>めいれい ぱれっと</h3>
         <div id="palettePanel"></div>
       </div>
       <div class="panelBox" id="functionPanelWrap" style="display:none;">
         <div id="functionPanel"></div>
       </div>
       <div class="panelBox">
-        <h3>プログラム</h3>
+        <h3>ぷろぐらむ</h3>
         <div id="programPanel"></div>
       </div>
     </div>
@@ -204,19 +204,19 @@
 <!-- ===== Certificate Screen ===== -->
 <div id="screenCert" class="screen">
   <div class="certBox">
-    <h1>🏅 免許皆伝 🏅</h1>
-    <p>おめでとうございます！全22の試練を乗り越え、以下の「プログラミングの考え方」を身につけました。</p>
+    <h1>🏅 めんきょかいでん 🏅</h1>
+    <p>おめでとうございます！ ぜんぶで22の しれんを のりこえて、つぎの 「ぷろぐらみんぐの かんがえかた」を みにつけました。</p>
     <ul class="certList">
-      <li>✅ 順次実行 ― 命令は上から順番に実行される</li>
-      <li>✅ くり返し ― 同じ処理をまとめて簡潔に書く</li>
-      <li>✅ 条件分岐 ― 状況によって処理を変える</li>
-      <li>✅ 条件くり返し(while) ― 終わる条件で処理を続ける</li>
-      <li>✅ 変数 ― 状態(データ)を覚えておく</li>
-      <li>✅ 関数 ― ひとまとまりの処理に名前をつけて再利用する</li>
-      <li>✅ デバッグ ― 間違いを見つけて直す</li>
+      <li>✅ じゅんじじっこう ― めいれいは うえから じゅんばんに じっこうされる</li>
+      <li>✅ くりかえし ― おなじ しょりを まとめて みじかく かく</li>
+      <li>✅ じょうけんぶんき ― じょうきょうに よって しょりを かえる</li>
+      <li>✅ じょうけんくりかえし ― おわる じょうけんで しょりを つづける</li>
+      <li>✅ へんすう ― じょうたいを おぼえておく</li>
+      <li>✅ かんすう ― ひとまとまりの しょりに なまえを つけて もういちど つかう</li>
+      <li>✅ でばっぐ ― まちがいを みつけて なおす</li>
     </ul>
-    <p>これが「プログラミングとは何か」の入り口です。お疲れさまでした！</p>
-    <button class="bigBtn" id="btnCertBack">ステージ一覧へ戻る</button>
+    <p>これが 「ぷろぐらみんぐとは なにか」の いりぐちです。おつかれさまでした！</p>
+    <button class="bigBtn" id="btnCertBack">すてえじ いちらんへ もどる</button>
   </div>
 </div>
 
@@ -226,30 +226,30 @@
 <div id="pickerOverlay" class="overlay"></div>
 
 <script>
-/* ===================== 気功道場プログラミング: エンジン+UI ===================== */
+/* ===================== きこうどうじょう ぷろぐらみんぐ: engine + UI ===================== */
 
-/* ---------- 基本定数 ---------- */
+/* ---------- constants ---------- */
 var DIRS = [[0,-1],[1,0],[0,1],[-1,0]]; // up, right, down, left
 var DIR_ARROW = ['⬆️','➡️','⬇️','⬅️'];
 
 var COND_LABEL = {
-  wallAhead: '前が かべ',
-  pathClear: '前が 道(かべじゃない)',
-  enemyAhead: '前に 敵がいる',
-  energyReady: '気が 十分たまっている'
+  wallAhead: 'まえが かべ',
+  pathClear: 'まえが みち(かべじゃない)',
+  enemyAhead: 'まえに てきがいる',
+  energyReady: 'きが じゅうぶん たまっている'
 };
 
 var PALETTE_LABEL = {
-  move: '⬆️ 前に進む',
-  turnLeft: '↩️ 左を向く',
-  turnRight: '↪️ 右を向く',
+  move: '⬆️ まえにすすむ',
+  turnLeft: '↩️ ひだりをむく',
+  turnRight: '↪️ みぎをむく',
   attack: '👊 こうげき',
-  chargeEnergy: '⚡ 気をためる',
-  blast: '💥 気功波',
-  repeat: '🔁 くり返す',
+  chargeEnergy: '⚡ きをためる',
+  blast: '💥 きこうは',
+  repeat: '🔁 くりかえす',
   'if': '❓ もし〜なら',
-  'while': '🔁❓ 〜の間くり返す',
-  call: '🥋 必殺技をだす'
+  'while': '🔁❓ 〜のあいだ くりかえす',
+  call: '🥋 ひっさつわざをだす'
 };
 
 function mkGrid(w,h){
@@ -262,239 +262,239 @@ function mkGrid(w,h){
   return rows;
 }
 
-/* ---------- レベルデータ (22ステージ) ---------- */
+/* ---------- level data (22 stages) ---------- */
 var LEVELS = [
-/* ===== CH0 チュートリアル ===== */
+/* ===== CH0 ちゅうとりある ===== */
 {
-  chapter:'CH0', chapterTitle:'チュートリアル',
-  title:'はじめの一歩', concept:'順次実行 ①',
-  explain:'プログラムは、書いた命令を「上から順番に」実行します。ゴール🚩まで「前に進む」を必要な回数ならべてみましょう。',
+  chapter:'CH0', chapterTitle:'ちゅうとりある',
+  title:'はじめの いっぽ', concept:'じゅんじじっこう(1)',
+  explain:'ぷろぐらむは、かいた めいれいを 「うえから じゅんばんに」 じっこうします。ごうる🚩まで 「まえに すすむ」を ひつような かいすう ならべてみましょう。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[],
   palette:['move'], conditions:[],
-  recap:'これが「順次実行」です。プログラムは書いた順番に、上から下へ実行されます。'
+  recap:'これが 「じゅんじじっこう」です。ぷろぐらむは かいた じゅんばんに、うえから したへ じっこうされます。'
 },
 {
-  chapter:'CH0', chapterTitle:'チュートリアル',
-  title:'はじめての攻撃', concept:'順次実行 ②(こうげき)',
-  explain:'新しい命令「こうげき」が使えるようになりました。敵の正面まで近づいて「こうげき」するとたおせます。命令を正しい順番でならべてゴールを目指しましょう。',
+  chapter:'CH0', chapterTitle:'ちゅうとりある',
+  title:'はじめての こうげき', concept:'じゅんじじっこう(2) こうげき',
+  explain:'あたらしい めいれい 「こうげき」が つかえるように なりました。てきの しょうめんまで ちかづいて 「こうげき」すると たおせます。めいれいを ただしい じゅんばんで ならべて ごうるを めざしましょう。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
   palette:['move','attack'], conditions:[],
-  recap:'「移動」と「こうげき」、種類の違う命令も順番に並べれば連携して動きます。'
+  recap:'「いどう」と 「こうげき」、しゅるいの ちがう めいれいも じゅんばんに ならべれば れんけいして うごきます。'
 },
 
-/* ===== CH1 順次実行(応用) ===== */
+/* ===== CH1 じゅんじじっこう(おうよう) ===== */
 {
-  chapter:'CH1', chapterTitle:'順次実行',
-  title:'まがりかど', concept:'順次実行 ③(むきを変える)',
-  explain:'「右を向く」「左を向く」でキャラクターの向きを変えられます。曲がり角をうまく曲がってゴールへ！',
+  chapter:'CH1', chapterTitle:'じゅんじじっこう',
+  title:'まがりかど', concept:'じゅんじじっこう(3) むきをかえる',
+  explain:'「みぎをむく」「ひだりをむく」で きゃらくたあの むきを かえられます。まがりかどを うまく まがって ごうるへ！',
   w:4,h:4, grid:mkGrid(4,4),
   start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
   palette:['move','turnLeft','turnRight'], conditions:[],
-  recap:'向きを変える命令と移動命令を組み合わせることで、自由な経路を描けます。'
+  recap:'むきを かえる めいれいと いどうの めいれいを くみあわせることで、じゆうな みちを えがけます。'
 },
 {
-  chapter:'CH1', chapterTitle:'順次実行',
-  title:'ジグザグロード', concept:'順次実行 ④(くみあわせ)',
-  explain:'右に曲がったり左に曲がったり。命令の組み合わせ方を工夫してゴールを目指しましょう。',
+  chapter:'CH1', chapterTitle:'じゅんじじっこう',
+  title:'じぐざぐろうど', concept:'じゅんじじっこう(4) くみあわせ',
+  explain:'みぎに まがったり ひだりに まがったり。めいれいの くみあわせかたを くふうして ごうるを めざしましょう。',
   w:5,h:5, grid:mkGrid(5,5),
   start:{x:0,y:0,dir:1}, goal:{x:4,y:4}, enemies:[],
   palette:['move','turnLeft','turnRight'], conditions:[],
-  recap:'複雑に見える経路も、単純な命令の「正しい並び」で表現できます。'
+  recap:'ふくざつに みえる みちも、たんじゅんな めいれいの 「ただしい ならび」で あらわせます。'
 },
 
-/* ===== CH2 くり返し ===== */
+/* ===== CH2 くりかえし ===== */
 {
-  chapter:'CH2', chapterTitle:'くり返し',
-  title:'まっすぐな道', concept:'くり返し ①(同じ命令を何度も)',
-  explain:'長い道のりです。「くり返す」を使うと『前に進む』を何回も書かなくて済みます。今回はブロック数に上限があるので、くり返しを使ってみましょう。',
+  chapter:'CH2', chapterTitle:'くりかえし',
+  title:'まっすぐな みち', concept:'くりかえし(1) おなじ めいれいを なんども',
+  explain:'ながい みちのりです。「くりかえす」を つかうと 『まえに すすむ』を なんかいも かかなくて すみます。こんかいは ぶろっくの かずに じょうげんが あるので、くりかえしを つかってみましょう。',
   w:9,h:1, grid:mkGrid(9,1),
   start:{x:0,y:0,dir:1}, goal:{x:8,y:0}, enemies:[],
   palette:['move','repeat'], conditions:[], maxBlocks:3,
-  recap:'8回の「前に進む」が、たった2つのブロックで表現できました。これが「くり返し」の力です。'
+  recap:'8かいの 「まえに すすむ」が、たった2つの ぶろっくで あらわせました。これが 「くりかえし」の ちからです。'
 },
 {
-  chapter:'CH2', chapterTitle:'くり返し',
-  title:'しかくい道', concept:'くり返し ②(パターンをくり返す)',
-  explain:'「前に進む→前に進む→右を向く」という3つの命令のまとまりを、くり返しの中に入れてみましょう。複数の命令もまとめてくり返せます。',
+  chapter:'CH2', chapterTitle:'くりかえし',
+  title:'しかくい みち', concept:'くりかえし(2) ぱたあんを くりかえす',
+  explain:'「まえに すすむ→まえに すすむ→みぎを むく」という 3つの めいれいの まとまりを、くりかえしの なかに いれてみましょう。いくつもの めいれいも まとめて くりかえせます。',
   w:4,h:4, grid:mkGrid(4,4),
   start:{x:0,y:0,dir:1}, goal:{x:2,y:2}, enemies:[],
   palette:['move','turnLeft','turnRight','repeat'], conditions:[],
-  recap:'くり返しの中には、複数の命令をまとめて入れることができます。'
+  recap:'くりかえしの なかには、いくつもの めいれいを まとめて いれることが できます。'
 },
 {
-  chapter:'CH2', chapterTitle:'くり返し',
-  title:'3れんげき', concept:'くり返し ③(たたかいでも便利)',
-  explain:'HPが3ある敵です。「こうげき」を3回くり返すとたおせます。今回もブロック数に上限があるので工夫してみましょう。',
+  chapter:'CH2', chapterTitle:'くりかえし',
+  title:'さんれんげき', concept:'くりかえし(3) たたかいでも べんり',
+  explain:'たいりょくが 3ある てきです。「こうげき」を 3かい くりかえすと たおせます。こんかいも ぶろっくの かずに じょうげんが あるので くふうしてみましょう。',
   w:4,h:1, grid:mkGrid(4,1),
   start:{x:0,y:0,dir:1}, goal:{x:3,y:0}, enemies:[{x:2,y:0,hp:3}],
   palette:['move','attack','repeat'], conditions:[], maxBlocks:5,
-  recap:'くり返しは移動だけでなく、戦闘のような場面でも活躍します。'
+  recap:'くりかえしは いどうだけでなく、たたかいのような ばめんでも やくにたちます。'
 },
 
-/* ===== CH3 条件分岐 ===== */
+/* ===== CH3 じょうけんぶんき ===== */
 {
-  chapter:'CH3', chapterTitle:'条件分岐',
-  title:'かべにきづく', concept:'条件分岐 ①(もし〜なら)',
-  explain:'「もし〇〇なら」を使うと、状況によって違う命令を実行できます。ここでは「前がかべなら右を向く」を使ってみましょう。',
+  chapter:'CH3', chapterTitle:'じょうけんぶんき',
+  title:'かべにきづく', concept:'じょうけんぶんき(1) もし〜なら',
+  explain:'「もし 〇〇なら」を つかうと、じょうきょうに よって ちがう めいれいを じっこうできます。ここでは 「まえが かべなら みぎを むく」を つかってみましょう。',
   w:4,h:4, grid:mkGrid(4,4),
   start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
   palette:['move','turnLeft','turnRight','if'], conditions:['wallAhead'],
-  recap:'「もし〜なら」は、プログラムが状況を見て自分で判断するための仕組みです。'
+  recap:'「もし〜なら」は、ぷろぐらむが じょうきょうを みて じぶんで はんだんする ための しくみです。'
 },
 {
-  chapter:'CH3', chapterTitle:'条件分岐',
-  title:'たたかうか すすむか', concept:'条件分岐 ②(if / else)',
-  explain:'「もし正面に敵がいたらこうげき、いなければ前に進む」というルールをくり返しの中に入れると、敵がどこにいても対応できる賢いプログラムになります。',
+  chapter:'CH3', chapterTitle:'じょうけんぶんき',
+  title:'たたかうか すすむか', concept:'じょうけんぶんき(2) もし、そうでなければ',
+  explain:'「もし しょうめんに てきが いたら こうげき、いなければ まえに すすむ」という るうるを くりかえしの なかに いれると、てきが どこに いても たいおうできる かしこい ぷろぐらむに なります。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
   palette:['move','attack','if','repeat'], conditions:['enemyAhead'],
-  recap:'固定の経路を暗記するのではなく、状況に応じて反応するプログラムが書けました。'
+  recap:'きまった みちを おぼえるのでは なく、じょうきょうに あわせて はんのうする ぷろぐらむが かけました。'
 },
 {
-  chapter:'CH3', chapterTitle:'条件分岐',
-  title:'かべづたい', concept:'条件分岐 ③(くり返しと組み合わせ)',
-  explain:'「もし前がかべなら右を向く、そうでなければ前に進む」をくり返せば、曲がり角があっても自動で対応できます。少し多めにくり返しても、ゴールに着いたら自動で止まります。',
+  chapter:'CH3', chapterTitle:'じょうけんぶんき',
+  title:'かべづたい', concept:'じょうけんぶんき(3) くりかえしと くみあわせ',
+  explain:'「もし まえが かべなら みぎを むく、そうでなければ まえに すすむ」を くりかえせば、まがりかどが あっても じどうで たいおうできます。すこし おおめに くりかえしても、ごうるに ついたら じどうで とまります。',
   w:4,h:4, grid:mkGrid(4,4),
   start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
   palette:['move','turnRight','turnLeft','if','repeat'], conditions:['wallAhead'],
-  recap:'同じ1つのルールが、まっすぐな道でも曲がり角でも自動的に正しく動きました。'
+  recap:'おなじ ひとつの るうるが、まっすぐな みちでも まがりかどでも じどうてきに ただしく うごきました。'
 },
 
-/* ===== CH4 条件くり返し(while) ===== */
+/* ===== CH4 じょうけんくりかえし(while) ===== */
 {
-  chapter:'CH4', chapterTitle:'条件くり返し',
-  title:'どこまでも道', concept:'条件くり返し ①(while)',
-  explain:'とても長い道です。回数を数えるのは大変なので「道がある間、進み続ける」という条件くり返しを使ってみましょう。道の長さを知らなくても解けるのが強みです。',
+  chapter:'CH4', chapterTitle:'じょうけんくりかえし',
+  title:'どこまでも みち', concept:'じょうけんくりかえし(1) 〜のあいだ',
+  explain:'とても ながい みちです。かいすうを かぞえるのは たいへんなので 「みちが あるあいだ、すすみつづける」という じょうけんくりかえしを つかってみましょう。みちの ながさを しらなくても とけるのが つよみです。',
   w:16,h:1, grid:mkGrid(16,1),
   start:{x:0,y:0,dir:1}, goal:{x:15,y:0}, enemies:[],
   palette:['move','while'], conditions:['pathClear'],
-  recap:'「くり返す」は回数を決めますが、「〜の間くり返す」は終わる条件を決めます。使い分けが大切です。'
+  recap:'「くりかえす」は かいすうを きめますが、「〜のあいだ くりかえす」は おわる じょうけんを きめます。つかいわけが たいせつです。'
 },
 {
-  chapter:'CH4', chapterTitle:'条件くり返し',
-  title:'たおれるまで', concept:'条件くり返し ②(HPが分からなくても)',
-  explain:'この敵のHPは毎回ランダムです(何度でも試せます)。「敵がいる間、こうげきし続ける」を使えば、HPがいくつでも確実にたおせます。',
+  chapter:'CH4', chapterTitle:'じょうけんくりかえし',
+  title:'たおれるまで', concept:'じょうけんくりかえし(2) たいりょくが わからなくても',
+  explain:'この てきの たいりょくは まいかい らんだむです(なんかいでも ためせます)。「てきが いるあいだ、こうげきしつづける」を つかえば、たいりょくが いくつでも たしかに たおせます。',
   w:3,h:1, grid:mkGrid(3,1),
   start:{x:0,y:0,dir:1}, goal:{x:2,y:0}, enemies:[{x:1,y:0,randomHp:[2,6]}],
   palette:['move','attack','while'], conditions:['enemyAhead'],
-  recap:'決まった回数が分からない時こそ、while(条件くり返し)の出番です。'
+  recap:'きまった かいすうが わからない ときこそ、じょうけんくりかえしの でばんです。'
 },
 {
-  chapter:'CH4', chapterTitle:'条件くり返し',
-  title:'ぼうけんのみち', concept:'条件くり返し ③(if + whileの合わせ技)',
-  explain:'長い道のとちゅうに敵がいます。「道がある間、(もし敵がいればこうげき、いなければ進む)」を組み合わせれば、道の長さも敵の位置も気にせず突破できます。',
+  chapter:'CH4', chapterTitle:'じょうけんくりかえし',
+  title:'ぼうけんのみち', concept:'じょうけんくりかえし(3) もしと あわせわざ',
+  explain:'ながい みちの とちゅうに てきが います。「みちが あるあいだ、(もし てきが いれば こうげき、いなければ すすむ)」を くみあわせれば、みちの ながさも てきの いちも きにせず とっぱできます。',
   w:10,h:1, grid:mkGrid(10,1),
   start:{x:0,y:0,dir:1}, goal:{x:9,y:0}, enemies:[{x:5,y:0,hp:2}],
   palette:['move','attack','if','while'], conditions:['pathClear','enemyAhead'],
-  recap:'条件くり返しの中に「もし〜なら」を入れると、より柔軟に状況へ対応できます。'
+  recap:'じょうけんくりかえしの なかに 「もし〜なら」を いれると、もっと じゆうに じょうきょうへ たいおうできます。'
 },
 
-/* ===== CH5 変数 ===== */
+/* ===== CH5 へんすう ===== */
 {
-  chapter:'CH5', chapterTitle:'変数',
-  title:'気をためる', concept:'変数 ①(気を貯める)',
-  explain:'「気をためる」を使うとエネルギー(変数)が増えていきます。3たまったら「気功波」で遠くの敵を倒せます。変数はプログラムが動いている間の「状態」を覚えておく仕組みです。',
+  chapter:'CH5', chapterTitle:'へんすう',
+  title:'きを ためる', concept:'へんすう(1) きを ためる',
+  explain:'「きを ためる」を つかうと きが どんどん ふえていきます。3つ たまったら 「きこうは」で とおくの てきを たおせます。へんすうは ぷろぐらむが うごいている あいだの 「じょうたい」を おぼえておく しくみです。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:4,y:0,hp:1}],
   palette:['move','chargeEnergy','blast'], conditions:[], energyThreshold:3,
-  recap:'「気」という数字(変数)が、プログラムを実行するたびに変化していくのを確認できましたね。'
+  recap:'「き」という かず(へんすう)が、ぷろぐらむを じっこうする たびに かわっていくのを たしかめられましたね。'
 },
 {
-  chapter:'CH5', chapterTitle:'変数',
-  title:'気のやりくり', concept:'変数 ②(何度も充電)',
-  explain:'変数の値は実行中に何度でも変えられます。2体の敵にそれぞれ気功波を放つには、気をためなおす必要があります。',
+  chapter:'CH5', chapterTitle:'へんすう',
+  title:'きの やりくり', concept:'へんすう(2) なんども ためなおす',
+  explain:'へんすうの あたいは じっこうちゅうに なんども かえられます。2たいの てきに それぞれ きこうはを はなつには、きを ためなおす ひつようが あります。',
   w:9,h:1, grid:mkGrid(9,1),
   start:{x:0,y:0,dir:1}, goal:{x:8,y:0}, enemies:[{x:3,y:0,hp:1},{x:7,y:0,hp:1}],
   palette:['move','chargeEnergy','blast','repeat'], conditions:[], energyThreshold:3,
-  recap:'変数は使い切ったらまた貯め直せます。今の状態がどうなっているかを意識するのが大切です。'
+  recap:'へんすうは つかいきったら また ためなおせます。いまの じょうたいが どうなっているかを いしきするのが たいせつです。'
 },
 {
-  chapter:'CH5', chapterTitle:'変数',
-  title:'パワーとくり返し', concept:'変数 ③ + くり返し(合わせ技)',
-  explain:'今回は気が5たまるまで気功波が使えません。5回「気をためる」を書くのは大変なので、くり返しを使いましょう。ブロック数の上限にも注目です。',
+  chapter:'CH5', chapterTitle:'へんすう',
+  title:'ぱわあと くりかえし', concept:'へんすう(3) + くりかえし あわせわざ',
+  explain:'こんかいは きが 5つ たまるまで きこうはが つかえません。5かい 「きを ためる」を かくのは たいへんなので、くりかえしを つかいましょう。ぶろっくの かずの じょうげんにも ちゅうもくです。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:4,y:0,hp:1}],
   palette:['move','chargeEnergy','blast','repeat'], conditions:[], energyThreshold:5, maxBlocks:8,
-  recap:'変数とくり返し、2つの道具を組み合わせると、より複雑な目標も簡潔に達成できます。'
+  recap:'へんすうと くりかえし、2つの どうぐを くみあわせると、もっと ふくざつな もくひょうも みじかく たっせいできます。'
 },
 
-/* ===== CH6 関数 ===== */
+/* ===== CH6 かんすう ===== */
 {
-  chapter:'CH6', chapterTitle:'関数',
-  title:'とくぎをつくる', concept:'関数 ①(まとめて名前をつける)',
-  explain:'同じ「気をためて気功波を放つ」動作を3回使います。毎回書く代わりに「必殺技」として一度組み立てれば、あとは呼び出すだけで使えます。これが「関数」です。',
+  chapter:'CH6', chapterTitle:'かんすう',
+  title:'とくぎをつくる', concept:'かんすう(1) まとめて なまえを つける',
+  explain:'おなじ 「きを ためて きこうはを はなつ」うごきを 3かい つかいます。まいかい かく かわりに 「ひっさつわざ」として いちど くみたてれば、あとは よびだすだけで つかえます。これが 「かんすう」です。',
   w:12,h:1, grid:mkGrid(12,1),
   start:{x:0,y:0,dir:1}, goal:{x:11,y:0},
   enemies:[{x:2,y:0,hp:1},{x:6,y:0,hp:1},{x:10,y:0,hp:1}],
   palette:['move','call'], conditions:[], energyThreshold:3,
   allowFunction:true, functionPalette:['chargeEnergy','blast'],
-  recap:'一度組み立てた「必殺技」は、何度でも呼び出して使い回せます。これが関数(まとめる力)です。'
+  recap:'いちど くみたてた 「ひっさつわざ」は、なんども よびだして つかいまわせます。これが かんすう(まとめる ちから)です。'
 },
 {
-  chapter:'CH6', chapterTitle:'関数',
-  title:'くり返しと必殺技', concept:'関数 ②(くり返しと組み合わせる)',
-  explain:'関数(必殺技)は、くり返しの中でも呼び出せます。同じパターンがくり返される時、関数とくり返しを組み合わせると、プログラムがとてもシンプルになります。',
+  chapter:'CH6', chapterTitle:'かんすう',
+  title:'くりかえしと ひっさつわざ', concept:'かんすう(2) くりかえしと くみあわせる',
+  explain:'かんすう(ひっさつわざ)は、くりかえしの なかでも よびだせます。おなじ ぱたあんが くりかえされる とき、かんすうと くりかえしを くみあわせると、ぷろぐらむが とても みじかく なります。',
   w:14,h:1, grid:mkGrid(14,1),
   start:{x:0,y:0,dir:1}, goal:{x:13,y:0},
   enemies:[{x:4,y:0,hp:1},{x:8,y:0,hp:1},{x:12,y:0,hp:1}],
   palette:['move','call','repeat'], conditions:[], energyThreshold:3,
   allowFunction:true, functionPalette:['chargeEnergy','blast'],
   functionsPrefill:{combo:[{type:'chargeEnergy'},{type:'chargeEnergy'},{type:'chargeEnergy'},{type:'blast'}]},
-  recap:'関数とくり返しの組み合わせは、プログラミングでとても強力な武器になります。'
+  recap:'かんすうと くりかえしの くみあわせは、ぷろぐらみんぐで とても つよい ぶきに なります。'
 },
 {
-  chapter:'CH6', chapterTitle:'関数',
-  title:'そうごうれんしゅう', concept:'まとめ(これまでの技をぜんぶ使おう)',
-  explain:'ここまで学んだ「順次実行・くり返し・条件分岐・条件くり返し・変数・関数」、好きな組み合わせで挑戦してみましょう。正解は1つではありません。',
+  chapter:'CH6', chapterTitle:'かんすう',
+  title:'そうごうれんしゅう', concept:'まとめ これまでの わざを ぜんぶ つかおう',
+  explain:'ここまで まなんだ 「じゅんじじっこう、くりかえし、じょうけんぶんき、じょうけんくりかえし、へんすう、かんすう」、すきな くみあわせで ちょうせんしてみましょう。せいかいは ひとつでは ありません。',
   w:5,h:6, grid:mkGrid(5,6),
   start:{x:0,y:0,dir:1}, goal:{x:4,y:5},
   enemies:[{x:2,y:0,hp:1},{x:4,y:3,hp:1}],
   palette:['move','turnLeft','turnRight','attack','chargeEnergy','blast','call','if','while','repeat'],
   conditions:['wallAhead','pathClear','enemyAhead','energyReady'],
   energyThreshold:3, allowFunction:true, functionPalette:['chargeEnergy','blast','attack'],
-  recap:'ここまで学んだ道具を、自分で選んで組み合わせられましたね。それがプログラミングの本質です。'
+  recap:'ここまで まなんだ どうぐを、じぶんで えらんで くみあわせられましたね。それが ぷろぐらみんぐの ほんしつです。'
 },
 
-/* ===== CH7 デバッグ ===== */
+/* ===== CH7 でばっぐ ===== */
 {
-  chapter:'CH7', chapterTitle:'デバッグ',
-  title:'バグをさがせ①', concept:'デバッグ ①(おしい!を直す)',
-  explain:'このプログラムは、ゴールまであと一歩のところで止まってしまいます。実行して確かめてから、正しく直してみましょう。',
+  chapter:'CH7', chapterTitle:'でばっぐ',
+  title:'ばぐをさがせ(1)', concept:'でばっぐ(1) おしい!を なおす',
+  explain:'この ぷろぐらむは、ごうるまで あと いっぽの ところで とまってしまいます。じっこうして たしかめてから、ただしく なおしてみましょう。',
   w:7,h:1, grid:mkGrid(7,1),
   start:{x:0,y:0,dir:1}, goal:{x:6,y:0}, enemies:[],
   palette:['move','repeat'], conditions:[],
   prefill:[{type:'repeat',count:5,body:[{type:'move'}]}],
-  recap:'プログラムのわずかな間違い(バグ)を、実行結果から見つけて直す。これが「デバッグ」です。'
+  recap:'ぷろぐらむの ちょっとした まちがい(ばぐ)を、じっこうの けっかから みつけて なおす。これが 「でばっぐ」です。'
 },
 {
-  chapter:'CH7', chapterTitle:'デバッグ',
-  title:'バグをさがせ②', concept:'デバッグ ②(条件のまちがい)',
-  explain:'このプログラムは、なぜか敵をたおせません。「もし」の条件がまちがっているようです。正しい条件に直してみましょう。',
+  chapter:'CH7', chapterTitle:'でばっぐ',
+  title:'ばぐをさがせ(2)', concept:'でばっぐ(2) じょうけんの まちがい',
+  explain:'この ぷろぐらむは、なぜか てきを たおせません。「もし」の じょうけんが まちがっているようです。ただしい じょうけんに なおしてみましょう。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
   palette:['move','attack','if','repeat'], conditions:['wallAhead','enemyAhead'],
   prefill:[{type:'repeat',count:6,body:[{type:'if',cond:'wallAhead',then:[{type:'attack'}],'else':[{type:'move'}]}]}],
-  recap:'条件の書き間違いは、プログラムが「思った通りに動かない」よくある原因のひとつです。'
+  recap:'じょうけんの かきまちがいは、ぷろぐらむが 「おもった とおりに うごかない」よくある げんいんの ひとつです。'
 },
 
-/* ===== CH8 さいごの試練 ===== */
+/* ===== CH8 さいごの しれん ===== */
 {
-  chapter:'CH8', chapterTitle:'さいごの試練',
-  title:'闇の帝王ザガス', concept:'そうごう(ファイナル)',
-  explain:'ラスボス「ザガス」はHPが高く、こうげきだけでは時間がかかります。「もし気が十分なら気功波、そうでなければ気をためる」を、敵がいる間くり返す作戦で挑みましょう。',
+  chapter:'CH8', chapterTitle:'さいごの しれん',
+  title:'やみの ていおう ざがす', concept:'そうごう さいごの たたかい',
+  explain:'らすぼすの 「ざがす」は たいりょくが たかく、こうげきだけでは じかんが かかります。「もし きが じゅうぶんなら きこうは、そうでなければ きを ためる」を、てきが いるあいだ くりかえす さくせんで いどみましょう。',
   w:6,h:1, grid:mkGrid(6,1),
   start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:12}],
   palette:['move','attack','chargeEnergy','blast','if','while','repeat','call'],
   conditions:['enemyAhead','energyReady','wallAhead','pathClear'],
   energyThreshold:3, blastDamage:3, allowFunction:true, functionPalette:['chargeEnergy','blast'],
-  recap:'順次実行・くり返し・条件分岐・条件くり返し・変数・関数・デバッグ。すべてを使いこなして勝利しました！',
+  recap:'じゅんじじっこう、くりかえし、じょうけんぶんき、じょうけんくりかえし、へんすう、かんすう、でばっぐ。ぜんぶを つかいこなして かちました！',
   isFinal:true
 }
 ];
 
-/* ---------- 実行エンジン ---------- */
+/* ---------- execution engine ---------- */
 function inBounds(level,x,y){ return x>=0 && y>=0 && x<level.w && y<level.h; }
 function isWallAt(level,x,y){
   if(!inBounds(level,x,y)) return true;
@@ -545,21 +545,21 @@ function* runBlock(block, level, state, functions, logFn){
       var f = frontCell(state);
       if(!isWallAt(level,f.x,f.y) && !findEnemyAt(state,f.x,f.y)){
         state.x = f.x; state.y = f.y;
-        logFn('前に進んだ → (' + (f.x+1) + ',' + (f.y+1) + ')');
+        logFn('まえに すすんだ → (' + (f.x+1) + ',' + (f.y+1) + ')');
       } else {
-        logFn('前に進めなかった(かべ or 敵)');
+        logFn('まえに すすめなかった(かべ または てき)');
       }
       state.steps++;
       yield;
       if(checkWin(state, level)){ state.won = true; return; }
     } else if(stmt.type==='turnLeft'){
       state.dir = (state.dir+3)%4;
-      logFn('左を向いた');
+      logFn('ひだりを むいた');
       state.steps++;
       yield;
     } else if(stmt.type==='turnRight'){
       state.dir = (state.dir+1)%4;
-      logFn('右を向いた');
+      logFn('みぎを むいた');
       state.steps++;
       yield;
     } else if(stmt.type==='attack'){
@@ -567,17 +567,17 @@ function* runBlock(block, level, state, functions, logFn){
       var en = findEnemyAt(state, f2.x, f2.y);
       if(en){
         en.hp -= 1;
-        logFn('こうげき！ 残りHP ' + Math.max(en.hp,0));
-        if(en.hp<=0) logFn('敵をたおした！');
+        logFn('こうげき！ のこり たいりょく ' + Math.max(en.hp,0));
+        if(en.hp<=0) logFn('てきを たおした！');
       } else {
-        logFn('こうげき… 空振り');
+        logFn('こうげき… からぶり');
       }
       state.steps++;
       yield;
     } else if(stmt.type==='chargeEnergy'){
       var maxE = level.energyMax || level.energyThreshold || 3;
       state.energy = Math.min(state.energy+1, maxE);
-      logFn('気をためた(' + state.energy + ')');
+      logFn('きを ためた(' + state.energy + ')');
       state.steps++;
       yield;
     } else if(stmt.type==='blast'){
@@ -587,14 +587,14 @@ function* runBlock(block, level, state, functions, logFn){
         var en2 = findEnemyAt(state, f3.x, f3.y);
         if(en2){
           en2.hp -= (level.blastDamage || 3);
-          logFn('気功波！ 残りHP ' + Math.max(en2.hp,0));
-          if(en2.hp<=0) logFn('敵をたおした！');
+          logFn('きこうは！ のこり たいりょく ' + Math.max(en2.hp,0));
+          if(en2.hp<=0) logFn('てきを たおした！');
         } else {
-          logFn('気功波… 何もなかった');
+          logFn('きこうは… なにも なかった');
         }
         state.energy = 0;
       } else {
-        logFn('気がたりない…');
+        logFn('きが たりない…');
       }
       state.steps++;
       yield;
@@ -617,24 +617,24 @@ function* runBlock(block, level, state, functions, logFn){
         yield* runBlock(stmt.body, level, state, functions, logFn);
         if(state.won) return;
         guard++;
-        if(guard>200){ logFn('むげんループかも？いったん止めました'); return; }
+        if(guard>200){ logFn('なんかいも くりかえしすぎたかも？いったん とめました'); return; }
       }
     } else if(stmt.type==='call'){
       var fn = functions[stmt.name || 'combo'];
       if(fn && fn.length){
         yield* runBlock(fn, level, state, functions, logFn);
       } else {
-        logFn('(必殺技はまだ組み立てられていません)');
+        logFn('(ひっさつわざは まだ くみたてられていません)');
       }
     }
     if(state.steps > (level.maxSteps || 300)){
-      logFn('ステップ数が多すぎるので停止しました');
+      logFn('うごきの かいすうが おおすぎるので とめました');
       return;
     }
   }
 }
 
-/* ---------- ノード木ユーティリティ ---------- */
+/* ---------- node tree utilities ---------- */
 var nextId = 1;
 function newId(){ return nextId++; }
 function tagIds(list){
@@ -853,12 +853,12 @@ function renderStatus(){
   var html = '<div class="statusTitle">'+(currentLevelIndex+1)+'. '+level.title+'</div>';
   if(level.palette.indexOf('chargeEnergy')>=0 || level.palette.indexOf('blast')>=0){
     var need = level.energyThreshold||3;
-    html += '<div class="energyBar">⚡気: '+ (state?state.energy:0) +' / '+need+'</div>';
+    html += '<div class="energyBar">⚡き: '+ (state?state.energy:0) +' / '+need+'</div>';
   }
   if(level.maxBlocks){
     var cnt = countNodes(program);
     var over = cnt > level.maxBlocks;
-    html += '<div class="blockCounter'+(over?' over':'')+'">ブロック: '+cnt+' / '+level.maxBlocks+'</div>';
+    html += '<div class="blockCounter'+(over?' over':'')+'">ぶろっく: '+cnt+' / '+level.maxBlocks+'</div>';
   }
   el.innerHTML = html;
 }
@@ -875,7 +875,7 @@ function renderStmt(node, depth){
   var del = '<button class="delBtn" data-action="delete" data-id="'+node.id+'">✕</button>';
   if(node.type==='repeat'){
     return '<div class="blockNode blockRepeat" style="'+pad+'">' +
-      '<div class="blockHead">🔁 くり返す ×'+node.count+'回 '+del+'</div>' +
+      '<div class="blockHead">🔁 くりかえす ×'+node.count+'かい '+del+'</div>' +
       renderList(node.body, node.id, 'body', depth+1) +
       '</div>';
   }
@@ -890,7 +890,7 @@ function renderStmt(node, depth){
   }
   if(node.type==='while'){
     return '<div class="blockNode blockWhile" style="'+pad+'">' +
-      '<div class="blockHead">🔁❓『'+COND_LABEL[node.cond]+'』の間 '+del+'</div>' +
+      '<div class="blockHead">🔁❓『'+COND_LABEL[node.cond]+'』の あいだ '+del+'</div>' +
       renderList(node.body, node.id, 'body', depth+1) +
       '</div>';
   }
@@ -907,7 +907,7 @@ function renderList(list, nodeId, slot, depth){
     html += renderStmt(list[i], depth);
   }
   html += '<div class="addHere'+(isActive?' active':'')+'" style="'+pad+'" data-action="setcursor" data-nodeid="'+(nodeId==null?'':nodeId)+'" data-slot="'+slot+'">' +
-    (isActive ? '➕ ここに追加(えらばれています)' : '➕ ここに追加') +
+    (isActive ? '➕ ここに ついか(えらばれています)' : '➕ ここに ついか') +
     '</div>';
   html += '</div>';
   return html;
@@ -923,8 +923,8 @@ function renderFunctionEditor(){
   if(!level.allowFunction){ wrap.style.display='none'; return; }
   wrap.style.display = 'block';
   var combo = functions.combo || [];
-  var html = '<div class="funcTitle">🥋 必殺技(combo)を組み立てる</div><div class="funcList">';
-  if(combo.length===0) html += '<div class="funcEmpty">まだ何もありません</div>';
+  var html = '<div class="funcTitle">🥋 ひっさつわざを くみたてよう</div><div class="funcList">';
+  if(combo.length===0) html += '<div class="funcEmpty">まだ なにも ありません</div>';
   for(var i=0;i<combo.length;i++){
     html += '<div class="blockNode blockLeaf"><div class="blockHead">'+PALETTE_LABEL[combo[i].type]+
       ' <button class="delBtn" data-action="fndelete" data-idx="'+i+'">✕</button></div></div>';
@@ -968,7 +968,7 @@ function getCursorList(){
 function openPicker(title, optionsHtml, onPick){
   var overlay = document.getElementById('pickerOverlay');
   overlay.innerHTML = '<div class="picker-box"><h3>'+title+'</h3><div class="picker-opts">'+optionsHtml+
-    '</div><button class="picker-cancel" id="pickerCancel">キャンセル</button></div>';
+    '</div><button class="picker-cancel" id="pickerCancel">やめる</button></div>';
   overlay.style.display = 'flex';
   overlay.onclick = function(e){
     if(e.target === overlay || e.target.id==='pickerCancel'){ overlay.style.display='none'; return; }
@@ -979,7 +979,7 @@ function openPicker(title, optionsHtml, onPick){
 
 function countOptionsHtml(){
   return [2,3,4,5,6,8,10].map(function(n){
-    return '<button class="picker-btn" data-val="'+n+'">'+n+' 回</button>';
+    return '<button class="picker-btn" data-val="'+n+'">'+n+' かい</button>';
   }).join('');
 }
 
@@ -987,7 +987,7 @@ function countOptionsHtml(){
 function addStatement(type){
   var list = getCursorList();
   if(type==='repeat'){
-    openPicker('くり返す回数を選ぶ', countOptionsHtml(), function(val){
+    openPicker('くりかえす かいすうを えらぶ', countOptionsHtml(), function(val){
       var node = {type:'repeat', count:parseInt(val,10), body:[], id:newId()};
       list.push(node);
       cursor = {nodeId:node.id, slot:'body'};
@@ -996,7 +996,7 @@ function addStatement(type){
     return;
   }
   if(type==='if'){
-    openPicker('条件を選ぶ', condOptionsHtml(), function(val){
+    openPicker('じょうけんを えらぶ', condOptionsHtml(), function(val){
       var node = {type:'if', cond:val, then:[], 'else':[], id:newId()};
       list.push(node);
       cursor = {nodeId:node.id, slot:'then'};
@@ -1005,7 +1005,7 @@ function addStatement(type){
     return;
   }
   if(type==='while'){
-    openPicker('条件を選ぶ', condOptionsHtml(), function(val){
+    openPicker('じょうけんを えらぶ', condOptionsHtml(), function(val){
       var node = {type:'while', cond:val, body:[], id:newId()};
       list.push(node);
       cursor = {nodeId:node.id, slot:'body'};
@@ -1044,14 +1044,14 @@ function startRun(){
   if(level.maxBlocks){
     var cnt = countNodes(program);
     if(cnt > level.maxBlocks){
-      logLine('⚠ ブロックが多すぎます('+cnt+'/'+level.maxBlocks+')。くり返しなどを使ってみましょう。');
+      logLine('⚠ ぶろっくが おおすぎます('+cnt+'/'+level.maxBlocks+')。くりかえしなどを つかってみましょう。');
       renderStatus();
       return;
     }
   }
   state = freshState(level);
   clearLog();
-  logLine('▶ 実行開始');
+  logLine('▶ じっこう かいし');
   gen = runBlock(program, level, state, functions, logLine);
   updateRunButtons();
   stepLoop();
@@ -1061,7 +1061,7 @@ function stepLoop(){
   if(!gen) return;
   var res;
   try{ res = gen.next(); }
-  catch(e){ logLine('エラー: '+e.message); gen=null; updateRunButtons(); return; }
+  catch(e){ logLine('なにか うまくいかなかったよ…'); gen=null; updateRunButtons(); return; }
   renderGrid(); renderStatus();
   playTick();
   if(state.won){
@@ -1073,7 +1073,7 @@ function stepLoop(){
   if(res.done){
     gen = null;
     updateRunButtons();
-    logLine('■ プログラムが終了しました(ゴール未到達)');
+    logLine('■ ぷろぐらむが おわりました(ごうるに とどかなかった)');
     return;
   }
   runTimer = setTimeout(stepLoop, currentSpeed);
@@ -1093,10 +1093,10 @@ function showVictory(){
   overlay.innerHTML =
     '<div class="introBox victoryBox">' +
       '<div class="victoryEmoji">🎉</div>' +
-      '<h2>クリア！</h2>' +
+      '<h2>やったね！</h2>' +
       '<p>'+level.recap+'</p>' +
-      (hasNext ? '<button class="bigBtn" id="btnNext">次のステージへ ▶</button>' : '<button class="bigBtn" id="btnCert">修了証を見る 🏅</button>') +
-      '<button class="smallBtn" id="btnToSelect">ステージ一覧に戻る</button>' +
+      (hasNext ? '<button class="bigBtn" id="btnNext">つぎの すてえじへ ▶</button>' : '<button class="bigBtn" id="btnCert">しゅうりょうしょうを みる 🏅</button>') +
+      '<button class="smallBtn" id="btnToSelect">すてえじいちらんに もどる</button>' +
     '</div>';
   overlay.style.display = 'flex';
   if(hasNext){
