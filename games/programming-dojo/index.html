@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>気功道場プログラミング</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin:0; padding:0; min-height:100%;
+    font-family: "Hiragino Kaku Gothic ProN","Yu Gothic","Segoe UI",sans-serif;
+    background: radial-gradient(circle at 20% 0%, #ffb35c 0%, #ff7a3d 35%, #c2452b 70%, #6b1f2a 100%);
+    color:#2a1408;
+  }
+  button { font-family: inherit; cursor:pointer; }
+  h1,h2,h3 { margin:0 0 8px; }
+
+  .screen { display:none; min-height:100vh; }
+  .screen.flexcol { flex-direction:column; align-items:center; }
+
+  /* ---------- Title screen ---------- */
+  #screenTitle { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; }
+  .titleLogo { font-size:56px; margin-bottom:6px; text-shadow:0 3px 0 rgba(0,0,0,0.25); }
+  .titleMain { font-size:30px; color:#fff8ec; text-shadow:0 2px 0 #8a2b12, 0 0 18px rgba(255,180,80,0.7); letter-spacing:2px; }
+  .titleSub { color:#fff0d8; margin:10px 0 26px; font-size:15px; max-width:520px; line-height:1.7; }
+  .bigBtn {
+    background: linear-gradient(180deg,#ffd76a,#ff9d2e); border:3px solid #7a3200;
+    color:#4a1f00; font-weight:bold; font-size:18px; padding:14px 30px; border-radius:16px;
+    box-shadow:0 6px 0 #7a3200, 0 10px 18px rgba(0,0,0,0.35); margin:8px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #7a3200; }
+  .smallBtn {
+    background:#fff2df; border:2px solid #7a3200; color:#4a1f00; font-weight:bold;
+    padding:9px 18px; border-radius:12px; margin:6px;
+  }
+
+  /* ---------- Select screen ---------- */
+  #screenSelect { display:none; min-height:100vh; padding:16px 12px 40px; }
+  .selectHeader { display:flex; align-items:center; gap:14px; max-width:900px; margin:0 auto 14px; }
+  .selectHeader h2 { color:#fff8ec; text-shadow:0 2px 0 #7a2c12; }
+  .selectWrap { max-width:900px; margin:0 auto; background:rgba(20,8,4,0.35); border-radius:20px; padding:18px; }
+  .chapterHead { color:#ffe9c2; font-weight:bold; font-size:15px; margin:16px 4px 8px; text-shadow:0 1px 0 #000; }
+  .chapterHead:first-child { margin-top:0; }
+  .chapterRow { display:flex; flex-wrap:wrap; gap:10px; }
+  .stageBtn {
+    background:#fff2df; border:3px solid #7a3200; border-radius:14px; padding:10px 12px;
+    min-width:120px; display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-weight:bold; color:#4a1f00; box-shadow:0 4px 0 #7a3200;
+  }
+  .stageBtn:active { transform:translateY(3px); box-shadow:0 1px 0 #7a3200; }
+  .stageBtn.locked { background:#b9a692; color:#6a5c4c; border-color:#6a5c4c; box-shadow:0 4px 0 #6a5c4c; opacity:0.75; }
+  .stageBtn.done { background:linear-gradient(180deg,#ffe9a8,#ffc85c); }
+  .stageNum { font-size:12px; opacity:0.8; }
+  .stageTitle { font-size:13px; }
+
+  /* ---------- Play screen ---------- */
+  #screenPlay { display:none; min-height:100vh; padding:12px; }
+  .playHeader { display:flex; align-items:center; gap:12px; flex-wrap:wrap; max-width:1100px; margin:0 auto 12px; }
+  .playHeader .smallBtn { margin:0; }
+  #statusBar { display:flex; gap:14px; flex-wrap:wrap; align-items:center; background:rgba(20,8,4,0.35); padding:8px 14px; border-radius:12px; color:#fff8ec; font-weight:bold; }
+  .statusTitle { font-size:15px; }
+  .energyBar { color:#ffe27a; }
+  .blockCounter { color:#c9f7c9; }
+  .blockCounter.over { color:#ff8a8a; }
+
+  .playWrap { display:flex; flex-wrap:wrap; gap:16px; max-width:1100px; margin:0 auto; }
+  .leftCol { flex:1 1 340px; }
+  .rightCol { flex:1 1 380px; }
+
+  .panelBox { background:rgba(255,248,236,0.94); border-radius:16px; padding:12px; margin-bottom:14px; box-shadow:0 6px 16px rgba(0,0,0,0.25); }
+  .panelBox h3 { font-size:14px; color:#7a3200; }
+
+  #gridView { display:grid; gap:2px; background:#3a2010; padding:6px; border-radius:10px; overflow:auto; max-width:100%; }
+  .tile { width:42px; height:42px; display:flex; align-items:center; justify-content:center; position:relative; font-size:20px; border-radius:3px; }
+  .tileA { background:#e7c68a; }
+  .tileB { background:#dcb877; }
+  .tileWall { background:#5a4636; }
+  .tileGoal { position:absolute; font-size:20px; }
+  .tileEnemy { position:absolute; font-size:20px; }
+  .tileEnemy .hpTag { position:absolute; bottom:-4px; right:-6px; background:#c0392b; color:#fff; font-size:9px; border-radius:6px; padding:0 3px; }
+  .tilePlayer { position:absolute; font-size:22px; transition:transform .2s; filter:drop-shadow(0 0 4px #fff59d); }
+
+  #logPanel { background:#1c0f08; color:#ffe9c2; font-size:12px; padding:10px; border-radius:10px; height:140px; overflow-y:auto; font-family:monospace; }
+  .logLine { padding:1px 0; border-bottom:1px dashed rgba(255,255,255,0.08); }
+
+  .runControls { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .runControls button { border:2px solid #7a3200; border-radius:10px; padding:8px 12px; font-weight:bold; background:#fff2df; color:#4a1f00; }
+  .runControls #btnRun { background:linear-gradient(180deg,#8dffa0,#3fc35b); }
+  .runControls #btnRun:disabled { opacity:0.5; }
+  .runControls #btnClear { background:#ffb3b3; }
+
+  .paletteBtn { background:#fff2df; border:2px solid #7a3200; border-radius:10px; padding:7px 10px; margin:3px; font-size:13px; font-weight:bold; color:#4a1f00; }
+  .paletteBtn.small { font-size:12px; padding:5px 8px; }
+  #palettePanel, .funcPalette { display:flex; flex-wrap:wrap; }
+
+  .blockList { border-left:2px dashed rgba(122,50,0,0.25); }
+  .blockNode { margin:4px 0; }
+  .blockHead { background:#fff2df; border:2px solid #7a3200; border-radius:8px; padding:6px 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; font-weight:bold; color:#4a1f00; }
+  .blockRepeat > .blockHead { background:#ffe1b3; }
+  .blockIf > .blockHead { background:#c8e6ff; }
+  .blockWhile > .blockHead { background:#d8ffcf; }
+  .blockLeaf > .blockHead { background:#fff2df; }
+  .delBtn { background:#c0392b; color:#fff; border:none; border-radius:6px; padding:1px 7px; font-size:11px; }
+  .slotLabel { font-size:11px; color:#7a3200; opacity:0.75; margin-top:2px; }
+  .addHere { font-size:12px; color:#7a3200; border:2px dashed rgba(122,50,0,0.35); border-radius:8px; padding:5px 8px; margin:4px 0; cursor:pointer; opacity:0.7; }
+  .addHere.active { background:#fff6a0; border-color:#7a3200; opacity:1; font-weight:bold; }
+
+  .funcTitle { font-size:13px; font-weight:bold; color:#7a3200; margin-bottom:6px; }
+  .funcEmpty { font-size:12px; color:#8a7256; padding:4px; }
+
+  /* ---------- overlays ---------- */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(20,8,4,0.72); z-index:50; align-items:center; justify-content:center; padding:16px; }
+  .introBox { background:#fff8ec; border-radius:20px; padding:26px; max-width:480px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+  .introChapter { color:#c2452b; font-weight:bold; font-size:13px; margin-bottom:6px; }
+  .introBox h2 { color:#4a1f00; font-size:22px; }
+  .introBox p { color:#4a1f00; line-height:1.7; font-size:14px; }
+  .victoryEmoji { font-size:56px; }
+
+  .picker-box { background:#fff8ec; border-radius:18px; padding:20px; max-width:420px; text-align:center; }
+  .picker-box h3 { color:#4a1f00; }
+  .picker-opts { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0; }
+  .picker-btn { background:#fff2df; border:2px solid #7a3200; border-radius:10px; padding:8px 14px; font-weight:bold; color:#4a1f00; }
+  .picker-cancel { background:none; border:none; color:#8a5a3a; text-decoration:underline; margin-top:6px; }
+
+  /* ---------- certificate ---------- */
+  #screenCert { display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; }
+  .certBox { background:#fff8ec; border-radius:24px; padding:34px; max-width:560px; text-align:center; box-shadow:0 14px 34px rgba(0,0,0,0.4); }
+  .certBox h1 { color:#c2452b; }
+  .certList { text-align:left; margin:18px auto; max-width:420px; }
+  .certList li { margin:6px 0; color:#4a1f00; }
+
+  @media (max-width:700px){
+    .tile { width:34px; height:34px; font-size:16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Title Screen ===== -->
+<div id="screenTitle" class="screen">
+  <div class="titleLogo">⚡🥋⚡</div>
+  <div class="titleMain">気功道場プログラミング</div>
+  <div class="titleSub">
+    修行の里で「プログラミングの考え方」を身につけよう。<br>
+    順次実行・くり返し・条件分岐・条件くり返し・変数・関数・デバッグ ―<br>
+    22の試練を乗り越え、最強の「気」の使い手を目指せ！
+  </div>
+  <button class="bigBtn" id="btnStartGame">はじめる</button>
+  <button class="smallBtn" id="btnShowSelect">ステージ一覧</button>
+</div>
+
+<!-- ===== Stage Select ===== -->
+<div id="screenSelect" class="screen">
+  <div class="selectHeader">
+    <button class="smallBtn" id="btnSelectBack">← タイトルへ</button>
+    <h2 style="margin:0;">ステージ一覧</h2>
+  </div>
+  <div class="selectWrap">
+    <div id="selectList"></div>
+  </div>
+</div>
+
+<!-- ===== Play Screen ===== -->
+<div id="screenPlay" class="screen">
+  <div class="playHeader">
+    <button class="smallBtn" id="btnPlayBack">← ステージ一覧</button>
+    <div id="statusBar"></div>
+    <button class="smallBtn" id="btnSpeed">▶ ふつう</button>
+    <button class="smallBtn" id="btnMute">🔊</button>
+    <button class="smallBtn" id="btnReload">🔄 やり直す</button>
+  </div>
+  <div class="playWrap">
+    <div class="leftCol">
+      <div class="panelBox">
+        <h3>フィールド</h3>
+        <div id="gridView"></div>
+      </div>
+      <div class="panelBox">
+        <h3>じっこうログ</h3>
+        <div id="logPanel"></div>
+      </div>
+    </div>
+    <div class="rightCol">
+      <div class="panelBox">
+        <div class="runControls">
+          <button id="btnRun">▶ 実行</button>
+          <button id="btnReset">⏸ リセット</button>
+          <button id="btnClear">🗑 全消去</button>
+        </div>
+        <h3>命令パレット</h3>
+        <div id="palettePanel"></div>
+      </div>
+      <div class="panelBox" id="functionPanelWrap" style="display:none;">
+        <div id="functionPanel"></div>
+      </div>
+      <div class="panelBox">
+        <h3>プログラム</h3>
+        <div id="programPanel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Certificate Screen ===== -->
+<div id="screenCert" class="screen">
+  <div class="certBox">
+    <h1>🏅 免許皆伝 🏅</h1>
+    <p>おめでとうございます！全22の試練を乗り越え、以下の「プログラミングの考え方」を身につけました。</p>
+    <ul class="certList">
+      <li>✅ 順次実行 ― 命令は上から順番に実行される</li>
+      <li>✅ くり返し ― 同じ処理をまとめて簡潔に書く</li>
+      <li>✅ 条件分岐 ― 状況によって処理を変える</li>
+      <li>✅ 条件くり返し(while) ― 終わる条件で処理を続ける</li>
+      <li>✅ 変数 ― 状態(データ)を覚えておく</li>
+      <li>✅ 関数 ― ひとまとまりの処理に名前をつけて再利用する</li>
+      <li>✅ デバッグ ― 間違いを見つけて直す</li>
+    </ul>
+    <p>これが「プログラミングとは何か」の入り口です。お疲れさまでした！</p>
+    <button class="bigBtn" id="btnCertBack">ステージ一覧へ戻る</button>
+  </div>
+</div>
+
+<!-- ===== Overlays ===== -->
+<div id="introOverlay" class="overlay"></div>
+<div id="victoryOverlay" class="overlay"></div>
+<div id="pickerOverlay" class="overlay"></div>
+
+<script>
+/* ===================== 気功道場プログラミング: エンジン+UI ===================== */
+
+/* ---------- 基本定数 ---------- */
+var DIRS = [[0,-1],[1,0],[0,1],[-1,0]]; // up, right, down, left
+var DIR_ARROW = ['⬆️','➡️','⬇️','⬅️'];
+
+var COND_LABEL = {
+  wallAhead: '前が かべ',
+  pathClear: '前が 道(かべじゃない)',
+  enemyAhead: '前に 敵がいる',
+  energyReady: '気が 十分たまっている'
+};
+
+var PALETTE_LABEL = {
+  move: '⬆️ 前に進む',
+  turnLeft: '↩️ 左を向く',
+  turnRight: '↪️ 右を向く',
+  attack: '👊 こうげき',
+  chargeEnergy: '⚡ 気をためる',
+  blast: '💥 気功波',
+  repeat: '🔁 くり返す',
+  'if': '❓ もし〜なら',
+  'while': '🔁❓ 〜の間くり返す',
+  call: '🥋 必殺技をだす'
+};
+
+function mkGrid(w,h){
+  var rows = [];
+  for(var i=0;i<h;i++){
+    var row = '';
+    for(var j=0;j<w;j++) row += '.';
+    rows.push(row);
+  }
+  return rows;
+}
+
+/* ---------- レベルデータ (22ステージ) ---------- */
+var LEVELS = [
+/* ===== CH0 チュートリアル ===== */
+{
+  chapter:'CH0', chapterTitle:'チュートリアル',
+  title:'はじめの一歩', concept:'順次実行 ①',
+  explain:'プログラムは、書いた命令を「上から順番に」実行します。ゴール🚩まで「前に進む」を必要な回数ならべてみましょう。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[],
+  palette:['move'], conditions:[],
+  recap:'これが「順次実行」です。プログラムは書いた順番に、上から下へ実行されます。'
+},
+{
+  chapter:'CH0', chapterTitle:'チュートリアル',
+  title:'はじめての攻撃', concept:'順次実行 ②(こうげき)',
+  explain:'新しい命令「こうげき」が使えるようになりました。敵の正面まで近づいて「こうげき」するとたおせます。命令を正しい順番でならべてゴールを目指しましょう。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
+  palette:['move','attack'], conditions:[],
+  recap:'「移動」と「こうげき」、種類の違う命令も順番に並べれば連携して動きます。'
+},
+
+/* ===== CH1 順次実行(応用) ===== */
+{
+  chapter:'CH1', chapterTitle:'順次実行',
+  title:'まがりかど', concept:'順次実行 ③(むきを変える)',
+  explain:'「右を向く」「左を向く」でキャラクターの向きを変えられます。曲がり角をうまく曲がってゴールへ！',
+  w:4,h:4, grid:mkGrid(4,4),
+  start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
+  palette:['move','turnLeft','turnRight'], conditions:[],
+  recap:'向きを変える命令と移動命令を組み合わせることで、自由な経路を描けます。'
+},
+{
+  chapter:'CH1', chapterTitle:'順次実行',
+  title:'ジグザグロード', concept:'順次実行 ④(くみあわせ)',
+  explain:'右に曲がったり左に曲がったり。命令の組み合わせ方を工夫してゴールを目指しましょう。',
+  w:5,h:5, grid:mkGrid(5,5),
+  start:{x:0,y:0,dir:1}, goal:{x:4,y:4}, enemies:[],
+  palette:['move','turnLeft','turnRight'], conditions:[],
+  recap:'複雑に見える経路も、単純な命令の「正しい並び」で表現できます。'
+},
+
+/* ===== CH2 くり返し ===== */
+{
+  chapter:'CH2', chapterTitle:'くり返し',
+  title:'まっすぐな道', concept:'くり返し ①(同じ命令を何度も)',
+  explain:'長い道のりです。「くり返す」を使うと『前に進む』を何回も書かなくて済みます。今回はブロック数に上限があるので、くり返しを使ってみましょう。',
+  w:9,h:1, grid:mkGrid(9,1),
+  start:{x:0,y:0,dir:1}, goal:{x:8,y:0}, enemies:[],
+  palette:['move','repeat'], conditions:[], maxBlocks:3,
+  recap:'8回の「前に進む」が、たった2つのブロックで表現できました。これが「くり返し」の力です。'
+},
+{
+  chapter:'CH2', chapterTitle:'くり返し',
+  title:'しかくい道', concept:'くり返し ②(パターンをくり返す)',
+  explain:'「前に進む→前に進む→右を向く」という3つの命令のまとまりを、くり返しの中に入れてみましょう。複数の命令もまとめてくり返せます。',
+  w:4,h:4, grid:mkGrid(4,4),
+  start:{x:0,y:0,dir:1}, goal:{x:2,y:2}, enemies:[],
+  palette:['move','turnLeft','turnRight','repeat'], conditions:[],
+  recap:'くり返しの中には、複数の命令をまとめて入れることができます。'
+},
+{
+  chapter:'CH2', chapterTitle:'くり返し',
+  title:'3れんげき', concept:'くり返し ③(たたかいでも便利)',
+  explain:'HPが3ある敵です。「こうげき」を3回くり返すとたおせます。今回もブロック数に上限があるので工夫してみましょう。',
+  w:4,h:1, grid:mkGrid(4,1),
+  start:{x:0,y:0,dir:1}, goal:{x:3,y:0}, enemies:[{x:2,y:0,hp:3}],
+  palette:['move','attack','repeat'], conditions:[], maxBlocks:5,
+  recap:'くり返しは移動だけでなく、戦闘のような場面でも活躍します。'
+},
+
+/* ===== CH3 条件分岐 ===== */
+{
+  chapter:'CH3', chapterTitle:'条件分岐',
+  title:'かべにきづく', concept:'条件分岐 ①(もし〜なら)',
+  explain:'「もし〇〇なら」を使うと、状況によって違う命令を実行できます。ここでは「前がかべなら右を向く」を使ってみましょう。',
+  w:4,h:4, grid:mkGrid(4,4),
+  start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
+  palette:['move','turnLeft','turnRight','if'], conditions:['wallAhead'],
+  recap:'「もし〜なら」は、プログラムが状況を見て自分で判断するための仕組みです。'
+},
+{
+  chapter:'CH3', chapterTitle:'条件分岐',
+  title:'たたかうか すすむか', concept:'条件分岐 ②(if / else)',
+  explain:'「もし正面に敵がいたらこうげき、いなければ前に進む」というルールをくり返しの中に入れると、敵がどこにいても対応できる賢いプログラムになります。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
+  palette:['move','attack','if','repeat'], conditions:['enemyAhead'],
+  recap:'固定の経路を暗記するのではなく、状況に応じて反応するプログラムが書けました。'
+},
+{
+  chapter:'CH3', chapterTitle:'条件分岐',
+  title:'かべづたい', concept:'条件分岐 ③(くり返しと組み合わせ)',
+  explain:'「もし前がかべなら右を向く、そうでなければ前に進む」をくり返せば、曲がり角があっても自動で対応できます。少し多めにくり返しても、ゴールに着いたら自動で止まります。',
+  w:4,h:4, grid:mkGrid(4,4),
+  start:{x:0,y:0,dir:1}, goal:{x:3,y:3}, enemies:[],
+  palette:['move','turnRight','turnLeft','if','repeat'], conditions:['wallAhead'],
+  recap:'同じ1つのルールが、まっすぐな道でも曲がり角でも自動的に正しく動きました。'
+},
+
+/* ===== CH4 条件くり返し(while) ===== */
+{
+  chapter:'CH4', chapterTitle:'条件くり返し',
+  title:'どこまでも道', concept:'条件くり返し ①(while)',
+  explain:'とても長い道です。回数を数えるのは大変なので「道がある間、進み続ける」という条件くり返しを使ってみましょう。道の長さを知らなくても解けるのが強みです。',
+  w:16,h:1, grid:mkGrid(16,1),
+  start:{x:0,y:0,dir:1}, goal:{x:15,y:0}, enemies:[],
+  palette:['move','while'], conditions:['pathClear'],
+  recap:'「くり返す」は回数を決めますが、「〜の間くり返す」は終わる条件を決めます。使い分けが大切です。'
+},
+{
+  chapter:'CH4', chapterTitle:'条件くり返し',
+  title:'たおれるまで', concept:'条件くり返し ②(HPが分からなくても)',
+  explain:'この敵のHPは毎回ランダムです(何度でも試せます)。「敵がいる間、こうげきし続ける」を使えば、HPがいくつでも確実にたおせます。',
+  w:3,h:1, grid:mkGrid(3,1),
+  start:{x:0,y:0,dir:1}, goal:{x:2,y:0}, enemies:[{x:1,y:0,randomHp:[2,6]}],
+  palette:['move','attack','while'], conditions:['enemyAhead'],
+  recap:'決まった回数が分からない時こそ、while(条件くり返し)の出番です。'
+},
+{
+  chapter:'CH4', chapterTitle:'条件くり返し',
+  title:'ぼうけんのみち', concept:'条件くり返し ③(if + whileの合わせ技)',
+  explain:'長い道のとちゅうに敵がいます。「道がある間、(もし敵がいればこうげき、いなければ進む)」を組み合わせれば、道の長さも敵の位置も気にせず突破できます。',
+  w:10,h:1, grid:mkGrid(10,1),
+  start:{x:0,y:0,dir:1}, goal:{x:9,y:0}, enemies:[{x:5,y:0,hp:2}],
+  palette:['move','attack','if','while'], conditions:['pathClear','enemyAhead'],
+  recap:'条件くり返しの中に「もし〜なら」を入れると、より柔軟に状況へ対応できます。'
+},
+
+/* ===== CH5 変数 ===== */
+{
+  chapter:'CH5', chapterTitle:'変数',
+  title:'気をためる', concept:'変数 ①(気を貯める)',
+  explain:'「気をためる」を使うとエネルギー(変数)が増えていきます。3たまったら「気功波」で遠くの敵を倒せます。変数はプログラムが動いている間の「状態」を覚えておく仕組みです。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:4,y:0,hp:1}],
+  palette:['move','chargeEnergy','blast'], conditions:[], energyThreshold:3,
+  recap:'「気」という数字(変数)が、プログラムを実行するたびに変化していくのを確認できましたね。'
+},
+{
+  chapter:'CH5', chapterTitle:'変数',
+  title:'気のやりくり', concept:'変数 ②(何度も充電)',
+  explain:'変数の値は実行中に何度でも変えられます。2体の敵にそれぞれ気功波を放つには、気をためなおす必要があります。',
+  w:9,h:1, grid:mkGrid(9,1),
+  start:{x:0,y:0,dir:1}, goal:{x:8,y:0}, enemies:[{x:3,y:0,hp:1},{x:7,y:0,hp:1}],
+  palette:['move','chargeEnergy','blast','repeat'], conditions:[], energyThreshold:3,
+  recap:'変数は使い切ったらまた貯め直せます。今の状態がどうなっているかを意識するのが大切です。'
+},
+{
+  chapter:'CH5', chapterTitle:'変数',
+  title:'パワーとくり返し', concept:'変数 ③ + くり返し(合わせ技)',
+  explain:'今回は気が5たまるまで気功波が使えません。5回「気をためる」を書くのは大変なので、くり返しを使いましょう。ブロック数の上限にも注目です。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:4,y:0,hp:1}],
+  palette:['move','chargeEnergy','blast','repeat'], conditions:[], energyThreshold:5, maxBlocks:8,
+  recap:'変数とくり返し、2つの道具を組み合わせると、より複雑な目標も簡潔に達成できます。'
+},
+
+/* ===== CH6 関数 ===== */
+{
+  chapter:'CH6', chapterTitle:'関数',
+  title:'とくぎをつくる', concept:'関数 ①(まとめて名前をつける)',
+  explain:'同じ「気をためて気功波を放つ」動作を3回使います。毎回書く代わりに「必殺技」として一度組み立てれば、あとは呼び出すだけで使えます。これが「関数」です。',
+  w:12,h:1, grid:mkGrid(12,1),
+  start:{x:0,y:0,dir:1}, goal:{x:11,y:0},
+  enemies:[{x:2,y:0,hp:1},{x:6,y:0,hp:1},{x:10,y:0,hp:1}],
+  palette:['move','call'], conditions:[], energyThreshold:3,
+  allowFunction:true, functionPalette:['chargeEnergy','blast'],
+  recap:'一度組み立てた「必殺技」は、何度でも呼び出して使い回せます。これが関数(まとめる力)です。'
+},
+{
+  chapter:'CH6', chapterTitle:'関数',
+  title:'くり返しと必殺技', concept:'関数 ②(くり返しと組み合わせる)',
+  explain:'関数(必殺技)は、くり返しの中でも呼び出せます。同じパターンがくり返される時、関数とくり返しを組み合わせると、プログラムがとてもシンプルになります。',
+  w:14,h:1, grid:mkGrid(14,1),
+  start:{x:0,y:0,dir:1}, goal:{x:13,y:0},
+  enemies:[{x:4,y:0,hp:1},{x:8,y:0,hp:1},{x:12,y:0,hp:1}],
+  palette:['move','call','repeat'], conditions:[], energyThreshold:3,
+  allowFunction:true, functionPalette:['chargeEnergy','blast'],
+  functionsPrefill:{combo:[{type:'chargeEnergy'},{type:'chargeEnergy'},{type:'chargeEnergy'},{type:'blast'}]},
+  recap:'関数とくり返しの組み合わせは、プログラミングでとても強力な武器になります。'
+},
+{
+  chapter:'CH6', chapterTitle:'関数',
+  title:'そうごうれんしゅう', concept:'まとめ(これまでの技をぜんぶ使おう)',
+  explain:'ここまで学んだ「順次実行・くり返し・条件分岐・条件くり返し・変数・関数」、好きな組み合わせで挑戦してみましょう。正解は1つではありません。',
+  w:5,h:6, grid:mkGrid(5,6),
+  start:{x:0,y:0,dir:1}, goal:{x:4,y:5},
+  enemies:[{x:2,y:0,hp:1},{x:4,y:3,hp:1}],
+  palette:['move','turnLeft','turnRight','attack','chargeEnergy','blast','call','if','while','repeat'],
+  conditions:['wallAhead','pathClear','enemyAhead','energyReady'],
+  energyThreshold:3, allowFunction:true, functionPalette:['chargeEnergy','blast','attack'],
+  recap:'ここまで学んだ道具を、自分で選んで組み合わせられましたね。それがプログラミングの本質です。'
+},
+
+/* ===== CH7 デバッグ ===== */
+{
+  chapter:'CH7', chapterTitle:'デバッグ',
+  title:'バグをさがせ①', concept:'デバッグ ①(おしい!を直す)',
+  explain:'このプログラムは、ゴールまであと一歩のところで止まってしまいます。実行して確かめてから、正しく直してみましょう。',
+  w:7,h:1, grid:mkGrid(7,1),
+  start:{x:0,y:0,dir:1}, goal:{x:6,y:0}, enemies:[],
+  palette:['move','repeat'], conditions:[],
+  prefill:[{type:'repeat',count:5,body:[{type:'move'}]}],
+  recap:'プログラムのわずかな間違い(バグ)を、実行結果から見つけて直す。これが「デバッグ」です。'
+},
+{
+  chapter:'CH7', chapterTitle:'デバッグ',
+  title:'バグをさがせ②', concept:'デバッグ ②(条件のまちがい)',
+  explain:'このプログラムは、なぜか敵をたおせません。「もし」の条件がまちがっているようです。正しい条件に直してみましょう。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:1}],
+  palette:['move','attack','if','repeat'], conditions:['wallAhead','enemyAhead'],
+  prefill:[{type:'repeat',count:6,body:[{type:'if',cond:'wallAhead',then:[{type:'attack'}],'else':[{type:'move'}]}]}],
+  recap:'条件の書き間違いは、プログラムが「思った通りに動かない」よくある原因のひとつです。'
+},
+
+/* ===== CH8 さいごの試練 ===== */
+{
+  chapter:'CH8', chapterTitle:'さいごの試練',
+  title:'闇の帝王ザガス', concept:'そうごう(ファイナル)',
+  explain:'ラスボス「ザガス」はHPが高く、こうげきだけでは時間がかかります。「もし気が十分なら気功波、そうでなければ気をためる」を、敵がいる間くり返す作戦で挑みましょう。',
+  w:6,h:1, grid:mkGrid(6,1),
+  start:{x:0,y:0,dir:1}, goal:{x:5,y:0}, enemies:[{x:3,y:0,hp:12}],
+  palette:['move','attack','chargeEnergy','blast','if','while','repeat','call'],
+  conditions:['enemyAhead','energyReady','wallAhead','pathClear'],
+  energyThreshold:3, blastDamage:3, allowFunction:true, functionPalette:['chargeEnergy','blast'],
+  recap:'順次実行・くり返し・条件分岐・条件くり返し・変数・関数・デバッグ。すべてを使いこなして勝利しました！',
+  isFinal:true
+}
+];
+
+/* ---------- 実行エンジン ---------- */
+function inBounds(level,x,y){ return x>=0 && y>=0 && x<level.w && y<level.h; }
+function isWallAt(level,x,y){
+  if(!inBounds(level,x,y)) return true;
+  return level.grid[y][x] === '#';
+}
+function findEnemyAt(state,x,y){
+  for(var i=0;i<state.enemies.length;i++){
+    var e = state.enemies[i];
+    if(e.hp>0 && e.x===x && e.y===y) return e;
+  }
+  return null;
+}
+function frontCell(state){
+  var d = DIRS[state.dir];
+  return {x: state.x+d[0], y: state.y+d[1]};
+}
+function checkWin(state, level){
+  return state.x===level.goal.x && state.y===level.goal.y;
+}
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function freshState(level){
+  return {
+    x: level.start.x, y: level.start.y, dir: level.start.dir,
+    energy: 0,
+    enemies: level.enemies.map(function(e){
+      return { x:e.x, y:e.y, hp: e.randomHp ? randInt(e.randomHp[0], e.randomHp[1]) : e.hp };
+    }),
+    steps: 0,
+    won: false
+  };
+}
+
+function evalCond(cond, state, level){
+  var f = frontCell(state);
+  if(cond==='wallAhead') return isWallAt(level, f.x, f.y);
+  if(cond==='pathClear') return !isWallAt(level, f.x, f.y);
+  if(cond==='enemyAhead') return !!findEnemyAt(state, f.x, f.y);
+  if(cond==='energyReady') return state.energy >= (level.energyThreshold || 3);
+  return false;
+}
+
+function* runBlock(block, level, state, functions, logFn){
+  for(var i=0;i<block.length;i++){
+    if(state.won) return;
+    var stmt = block[i];
+    if(stmt.type==='move'){
+      var f = frontCell(state);
+      if(!isWallAt(level,f.x,f.y) && !findEnemyAt(state,f.x,f.y)){
+        state.x = f.x; state.y = f.y;
+        logFn('前に進んだ → (' + (f.x+1) + ',' + (f.y+1) + ')');
+      } else {
+        logFn('前に進めなかった(かべ or 敵)');
+      }
+      state.steps++;
+      yield;
+      if(checkWin(state, level)){ state.won = true; return; }
+    } else if(stmt.type==='turnLeft'){
+      state.dir = (state.dir+3)%4;
+      logFn('左を向いた');
+      state.steps++;
+      yield;
+    } else if(stmt.type==='turnRight'){
+      state.dir = (state.dir+1)%4;
+      logFn('右を向いた');
+      state.steps++;
+      yield;
+    } else if(stmt.type==='attack'){
+      var f2 = frontCell(state);
+      var en = findEnemyAt(state, f2.x, f2.y);
+      if(en){
+        en.hp -= 1;
+        logFn('こうげき！ 残りHP ' + Math.max(en.hp,0));
+        if(en.hp<=0) logFn('敵をたおした！');
+      } else {
+        logFn('こうげき… 空振り');
+      }
+      state.steps++;
+      yield;
+    } else if(stmt.type==='chargeEnergy'){
+      var maxE = level.energyMax || level.energyThreshold || 3;
+      state.energy = Math.min(state.energy+1, maxE);
+      logFn('気をためた(' + state.energy + ')');
+      state.steps++;
+      yield;
+    } else if(stmt.type==='blast'){
+      var need = level.energyThreshold || 3;
+      if(state.energy >= need){
+        var f3 = frontCell(state);
+        var en2 = findEnemyAt(state, f3.x, f3.y);
+        if(en2){
+          en2.hp -= (level.blastDamage || 3);
+          logFn('気功波！ 残りHP ' + Math.max(en2.hp,0));
+          if(en2.hp<=0) logFn('敵をたおした！');
+        } else {
+          logFn('気功波… 何もなかった');
+        }
+        state.energy = 0;
+      } else {
+        logFn('気がたりない…');
+      }
+      state.steps++;
+      yield;
+    } else if(stmt.type==='repeat'){
+      for(var r=0;r<stmt.count;r++){
+        if(state.won) return;
+        yield* runBlock(stmt.body, level, state, functions, logFn);
+        if(state.won) return;
+      }
+    } else if(stmt.type==='if'){
+      if(evalCond(stmt.cond, state, level)){
+        yield* runBlock(stmt.then, level, state, functions, logFn);
+      } else {
+        yield* runBlock(stmt['else']||[], level, state, functions, logFn);
+      }
+    } else if(stmt.type==='while'){
+      var guard = 0;
+      while(evalCond(stmt.cond, state, level)){
+        if(state.won) return;
+        yield* runBlock(stmt.body, level, state, functions, logFn);
+        if(state.won) return;
+        guard++;
+        if(guard>200){ logFn('むげんループかも？いったん止めました'); return; }
+      }
+    } else if(stmt.type==='call'){
+      var fn = functions[stmt.name || 'combo'];
+      if(fn && fn.length){
+        yield* runBlock(fn, level, state, functions, logFn);
+      } else {
+        logFn('(必殺技はまだ組み立てられていません)');
+      }
+    }
+    if(state.steps > (level.maxSteps || 300)){
+      logFn('ステップ数が多すぎるので停止しました');
+      return;
+    }
+  }
+}
+
+/* ---------- ノード木ユーティリティ ---------- */
+var nextId = 1;
+function newId(){ return nextId++; }
+function tagIds(list){
+  for(var i=0;i<list.length;i++){
+    var n = list[i];
+    if(n.id==null) n.id = newId();
+    if(n.body) tagIds(n.body);
+    if(n.then) tagIds(n.then);
+    if(n['else']) tagIds(n['else']);
+  }
+  return list;
+}
+function findNodeById(list, id){
+  for(var i=0;i<list.length;i++){
+    var n = list[i];
+    if(n.id===id) return n;
+    var slots = ['body','then','else'];
+    for(var s=0;s<slots.length;s++){
+      if(n[slots[s]]){
+        var found = findNodeById(n[slots[s]], id);
+        if(found) return found;
+      }
+    }
+  }
+  return null;
+}
+function deleteNodeById(list, id){
+  for(var i=0;i<list.length;i++){
+    if(list[i].id===id){ list.splice(i,1); return true; }
+  }
+  for(var i2=0;i2<list.length;i2++){
+    var n = list[i2];
+    var slots = ['body','then','else'];
+    for(var s=0;s<slots.length;s++){
+      if(n[slots[s]] && deleteNodeById(n[slots[s]], id)) return true;
+    }
+  }
+  return false;
+}
+function countNodes(list){
+  var n = 0;
+  for(var i=0;i<list.length;i++){
+    n++;
+    var s = list[i];
+    if(s.body) n += countNodes(s.body);
+    if(s.then) n += countNodes(s.then);
+    if(s['else']) n += countNodes(s['else']);
+  }
+  return n;
+}
+function cloneAst(list){
+  return JSON.parse(JSON.stringify(list));
+}
+
+/* ===================== UI ===================== */
+var currentLevelIndex = 0;
+var level = null;
+var program = [];
+var functions = {};
+var cursor = { nodeId:null, slot:'root' };
+var state = null;
+var gen = null;
+var runTimer = null;
+var currentSpeed = 450;
+var muted = false;
+var audioCtx = null;
+var unlocked = 0;
+var completed = {};
+
+/* ---- persistence ---- */
+function loadProgress(){
+  try{
+    unlocked = parseInt(localStorage.getItem('dojo_unlocked')||'0',10) || 0;
+    var comp = JSON.parse(localStorage.getItem('dojo_completed')||'[]');
+    completed = {};
+    comp.forEach(function(i){ completed[i]=true; });
+  }catch(e){ unlocked=0; completed={}; }
+}
+function saveProgress(){
+  try{
+    localStorage.setItem('dojo_unlocked', String(unlocked));
+    localStorage.setItem('dojo_completed', JSON.stringify(Object.keys(completed).map(Number)));
+  }catch(e){}
+}
+
+/* ---- sound ---- */
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+}
+function playTone(freq,dur,delay,type){
+  if(muted) return;
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.22,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playTick(){ playTone(500+Math.random()*150,0.08); }
+function playWin(){ [523,659,784,1046].forEach(function(f,i){ playTone(f,0.28,i*0.15); }); }
+
+/* ---- screens ---- */
+function showScreen(name){
+  ['screenTitle','screenSelect','screenPlay','screenCert'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'flex' : 'none';
+  });
+}
+
+/* ---- stage select ---- */
+function renderSelect(){
+  var el = document.getElementById('selectList');
+  var html = '';
+  var lastChapter = null;
+  for(var i=0;i<LEVELS.length;i++){
+    var lv = LEVELS[i];
+    if(lv.chapter !== lastChapter){
+      html += '<div class="chapterHead">' + lv.chapterTitle + '</div><div class="chapterRow">';
+      lastChapter = lv.chapter;
+    }
+    var isLocked = i > unlocked;
+    var isDone = !!completed[i];
+    var cls = 'stageBtn' + (isLocked?' locked':'') + (isDone?' done':'');
+    html += '<button class="'+cls+'" data-idx="'+i+'" '+(isLocked?'disabled':'')+'>' +
+      (isLocked? '🔒' : (isDone?'✅':'▶️')) +
+      '<span class="stageNum">'+(i+1)+'</span>' +
+      '<span class="stageTitle">'+lv.title+'</span>' +
+      '</button>';
+    var nextLv = LEVELS[i+1];
+    if(!nextLv || nextLv.chapter !== lv.chapter){ html += '</div>'; }
+  }
+  el.innerHTML = html;
+}
+
+/* ---- level lifecycle ---- */
+function loadLevel(idx){
+  stopRun();
+  currentLevelIndex = idx;
+  level = LEVELS[idx];
+  program = level.prefill ? cloneAst(level.prefill) : [];
+  tagIds(program);
+  functions = {};
+  if(level.allowFunction){
+    functions.combo = (level.functionsPrefill && level.functionsPrefill.combo) ? cloneAst(level.functionsPrefill.combo) : [];
+  }
+  cursor = { nodeId:null, slot:'root' };
+  state = freshState(level);
+  clearLog();
+  showScreen('screenPlay');
+  renderAll();
+  showIntro();
+}
+
+function clearLog(){
+  document.getElementById('logPanel').innerHTML = '';
+}
+function logLine(msg){
+  var el = document.getElementById('logPanel');
+  var div = document.createElement('div');
+  div.className = 'logLine';
+  div.textContent = msg;
+  el.appendChild(div);
+  while(el.children.length > 60) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function showIntro(){
+  var overlay = document.getElementById('introOverlay');
+  overlay.innerHTML =
+    '<div class="introBox">' +
+      '<div class="introChapter">' + level.chapterTitle + ' - ' + level.concept + '</div>' +
+      '<h2>' + level.title + '</h2>' +
+      '<p>' + level.explain + '</p>' +
+      '<button class="bigBtn" id="introStart">はじめる</button>' +
+    '</div>';
+  overlay.style.display = 'flex';
+  document.getElementById('introStart').onclick = function(){ overlay.style.display='none'; };
+}
+
+/* ---- rendering: grid ---- */
+function renderGrid(){
+  var el = document.getElementById('gridView');
+  el.style.gridTemplateColumns = 'repeat(' + level.w + ', 42px)';
+  var html = '';
+  for(var y=0;y<level.h;y++){
+    for(var x=0;x<level.w;x++){
+      var wall = isWallAt(level,x,y);
+      var isGoal = (level.goal.x===x && level.goal.y===y);
+      var shade = (x+y)%2===0 ? 'tileA' : 'tileB';
+      var cls = 'tile ' + (wall?'tileWall':shade);
+      var content = '';
+      if(isGoal) content += '<span class="tileGoal">🚩</span>';
+      var enemy = state ? findEnemyAt(state,x,y) : null;
+      if(enemy){
+        content += '<span class="tileEnemy">👹<span class="hpTag">' + enemy.hp + '</span></span>';
+      }
+      if(state && state.x===x && state.y===y){
+        content += '<span class="tilePlayer" style="transform:rotate('+(state.dir*90)+'deg)">🥋</span>';
+      }
+      html += '<div class="'+cls+'">'+content+'</div>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderStatus(){
+  var el = document.getElementById('statusBar');
+  var html = '<div class="statusTitle">'+(currentLevelIndex+1)+'. '+level.title+'</div>';
+  if(level.palette.indexOf('chargeEnergy')>=0 || level.palette.indexOf('blast')>=0){
+    var need = level.energyThreshold||3;
+    html += '<div class="energyBar">⚡気: '+ (state?state.energy:0) +' / '+need+'</div>';
+  }
+  if(level.maxBlocks){
+    var cnt = countNodes(program);
+    var over = cnt > level.maxBlocks;
+    html += '<div class="blockCounter'+(over?' over':'')+'">ブロック: '+cnt+' / '+level.maxBlocks+'</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* ---- rendering: program tree ---- */
+function condOptionsHtml(){
+  return level.conditions.map(function(c){
+    return '<button class="picker-btn" data-val="'+c+'">'+COND_LABEL[c]+'</button>';
+  }).join('');
+}
+
+function renderStmt(node, depth){
+  var pad = 'padding-left:'+(depth*18)+'px;';
+  var del = '<button class="delBtn" data-action="delete" data-id="'+node.id+'">✕</button>';
+  if(node.type==='repeat'){
+    return '<div class="blockNode blockRepeat" style="'+pad+'">' +
+      '<div class="blockHead">🔁 くり返す ×'+node.count+'回 '+del+'</div>' +
+      renderList(node.body, node.id, 'body', depth+1) +
+      '</div>';
+  }
+  if(node.type==='if'){
+    return '<div class="blockNode blockIf" style="'+pad+'">' +
+      '<div class="blockHead">❓ もし『'+COND_LABEL[node.cond]+'』なら '+del+'</div>' +
+      '<div class="slotLabel" style="padding-left:'+((depth+1)*18)+'px">そうなら:</div>' +
+      renderList(node.then, node.id, 'then', depth+1) +
+      '<div class="slotLabel" style="padding-left:'+((depth+1)*18)+'px">そうでなければ:</div>' +
+      renderList(node['else'], node.id, 'else', depth+1) +
+      '</div>';
+  }
+  if(node.type==='while'){
+    return '<div class="blockNode blockWhile" style="'+pad+'">' +
+      '<div class="blockHead">🔁❓『'+COND_LABEL[node.cond]+'』の間 '+del+'</div>' +
+      renderList(node.body, node.id, 'body', depth+1) +
+      '</div>';
+  }
+  return '<div class="blockNode blockLeaf" style="'+pad+'">' +
+    '<div class="blockHead">'+PALETTE_LABEL[node.type]+' '+del+'</div>' +
+    '</div>';
+}
+
+function renderList(list, nodeId, slot, depth){
+  var pad = 'padding-left:'+(depth*18)+'px;';
+  var isActive = (cursor.nodeId===nodeId && cursor.slot===slot) || (nodeId===null && cursor.nodeId===null && slot==='root');
+  var html = '<div class="blockList">';
+  for(var i=0;i<list.length;i++){
+    html += renderStmt(list[i], depth);
+  }
+  html += '<div class="addHere'+(isActive?' active':'')+'" style="'+pad+'" data-action="setcursor" data-nodeid="'+(nodeId==null?'':nodeId)+'" data-slot="'+slot+'">' +
+    (isActive ? '➕ ここに追加(えらばれています)' : '➕ ここに追加') +
+    '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderProgram(){
+  var el = document.getElementById('programPanel');
+  el.innerHTML = renderList(program, null, 'root', 0);
+}
+
+function renderFunctionEditor(){
+  var wrap = document.getElementById('functionPanelWrap');
+  if(!level.allowFunction){ wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  var combo = functions.combo || [];
+  var html = '<div class="funcTitle">🥋 必殺技(combo)を組み立てる</div><div class="funcList">';
+  if(combo.length===0) html += '<div class="funcEmpty">まだ何もありません</div>';
+  for(var i=0;i<combo.length;i++){
+    html += '<div class="blockNode blockLeaf"><div class="blockHead">'+PALETTE_LABEL[combo[i].type]+
+      ' <button class="delBtn" data-action="fndelete" data-idx="'+i+'">✕</button></div></div>';
+  }
+  html += '</div><div class="funcPalette">';
+  level.functionPalette.forEach(function(t){
+    html += '<button class="paletteBtn small" data-action="fnadd" data-type="'+t+'">'+PALETTE_LABEL[t]+'</button>';
+  });
+  html += '</div>';
+  document.getElementById('functionPanel').innerHTML = html;
+}
+
+function renderPalette(){
+  var el = document.getElementById('palettePanel');
+  var html = '';
+  level.palette.forEach(function(t){
+    html += '<button class="paletteBtn" data-action="add" data-type="'+t+'">'+PALETTE_LABEL[t]+'</button>';
+  });
+  el.innerHTML = html;
+}
+
+function renderAll(){
+  renderGrid();
+  renderStatus();
+  renderProgram();
+  renderPalette();
+  renderFunctionEditor();
+  updateRunButtons();
+}
+
+/* ---- cursor list resolution ---- */
+function getCursorList(){
+  if(cursor.nodeId===null) return program;
+  var node = findNodeById(program, cursor.nodeId);
+  if(!node){ cursor = {nodeId:null, slot:'root'}; return program; }
+  if(!node[cursor.slot]) node[cursor.slot] = [];
+  return node[cursor.slot];
+}
+
+/* ---- picker modal ---- */
+function openPicker(title, optionsHtml, onPick){
+  var overlay = document.getElementById('pickerOverlay');
+  overlay.innerHTML = '<div class="picker-box"><h3>'+title+'</h3><div class="picker-opts">'+optionsHtml+
+    '</div><button class="picker-cancel" id="pickerCancel">キャンセル</button></div>';
+  overlay.style.display = 'flex';
+  overlay.onclick = function(e){
+    if(e.target === overlay || e.target.id==='pickerCancel'){ overlay.style.display='none'; return; }
+    var btn = e.target.closest('.picker-btn');
+    if(btn){ overlay.style.display='none'; onPick(btn.getAttribute('data-val')); }
+  };
+}
+
+function countOptionsHtml(){
+  return [2,3,4,5,6,8,10].map(function(n){
+    return '<button class="picker-btn" data-val="'+n+'">'+n+' 回</button>';
+  }).join('');
+}
+
+/* ---- palette actions ---- */
+function addStatement(type){
+  var list = getCursorList();
+  if(type==='repeat'){
+    openPicker('くり返す回数を選ぶ', countOptionsHtml(), function(val){
+      var node = {type:'repeat', count:parseInt(val,10), body:[], id:newId()};
+      list.push(node);
+      cursor = {nodeId:node.id, slot:'body'};
+      renderProgram(); renderStatus();
+    });
+    return;
+  }
+  if(type==='if'){
+    openPicker('条件を選ぶ', condOptionsHtml(), function(val){
+      var node = {type:'if', cond:val, then:[], 'else':[], id:newId()};
+      list.push(node);
+      cursor = {nodeId:node.id, slot:'then'};
+      renderProgram(); renderStatus();
+    });
+    return;
+  }
+  if(type==='while'){
+    openPicker('条件を選ぶ', condOptionsHtml(), function(val){
+      var node = {type:'while', cond:val, body:[], id:newId()};
+      list.push(node);
+      cursor = {nodeId:node.id, slot:'body'};
+      renderProgram(); renderStatus();
+    });
+    return;
+  }
+  var leaf = {type:type, id:newId()};
+  if(type==='call') leaf.name='combo';
+  list.push(leaf);
+  renderProgram(); renderStatus();
+}
+
+/* ---- run control ---- */
+function updateRunButtons(){
+  var running = !!gen;
+  document.getElementById('btnRun').disabled = running;
+  document.getElementById('btnReset').disabled = false;
+}
+
+function resetRuntime(){
+  stopRun();
+  state = freshState(level);
+  clearLog();
+  renderGrid(); renderStatus();
+}
+
+function stopRun(){
+  if(runTimer){ clearTimeout(runTimer); runTimer=null; }
+  gen = null;
+  updateRunButtons();
+}
+
+function startRun(){
+  if(gen) return;
+  if(level.maxBlocks){
+    var cnt = countNodes(program);
+    if(cnt > level.maxBlocks){
+      logLine('⚠ ブロックが多すぎます('+cnt+'/'+level.maxBlocks+')。くり返しなどを使ってみましょう。');
+      renderStatus();
+      return;
+    }
+  }
+  state = freshState(level);
+  clearLog();
+  logLine('▶ 実行開始');
+  gen = runBlock(program, level, state, functions, logLine);
+  updateRunButtons();
+  stepLoop();
+}
+
+function stepLoop(){
+  if(!gen) return;
+  var res;
+  try{ res = gen.next(); }
+  catch(e){ logLine('エラー: '+e.message); gen=null; updateRunButtons(); return; }
+  renderGrid(); renderStatus();
+  playTick();
+  if(state.won){
+    onWin();
+    gen = null;
+    updateRunButtons();
+    return;
+  }
+  if(res.done){
+    gen = null;
+    updateRunButtons();
+    logLine('■ プログラムが終了しました(ゴール未到達)');
+    return;
+  }
+  runTimer = setTimeout(stepLoop, currentSpeed);
+}
+
+function onWin(){
+  playWin();
+  completed[currentLevelIndex] = true;
+  if(currentLevelIndex+1 > unlocked) unlocked = currentLevelIndex+1;
+  saveProgress();
+  showVictory();
+}
+
+function showVictory(){
+  var overlay = document.getElementById('victoryOverlay');
+  var hasNext = currentLevelIndex+1 < LEVELS.length;
+  overlay.innerHTML =
+    '<div class="introBox victoryBox">' +
+      '<div class="victoryEmoji">🎉</div>' +
+      '<h2>クリア！</h2>' +
+      '<p>'+level.recap+'</p>' +
+      (hasNext ? '<button class="bigBtn" id="btnNext">次のステージへ ▶</button>' : '<button class="bigBtn" id="btnCert">修了証を見る 🏅</button>') +
+      '<button class="smallBtn" id="btnToSelect">ステージ一覧に戻る</button>' +
+    '</div>';
+  overlay.style.display = 'flex';
+  if(hasNext){
+    document.getElementById('btnNext').onclick = function(){ overlay.style.display='none'; loadLevel(currentLevelIndex+1); };
+  } else {
+    document.getElementById('btnCert').onclick = function(){ overlay.style.display='none'; showCertificate(); };
+  }
+  document.getElementById('btnToSelect').onclick = function(){ overlay.style.display='none'; renderSelect(); showScreen('screenSelect'); };
+}
+
+function showCertificate(){
+  showScreen('screenCert');
+}
+
+/* ---- event wiring ---- */
+function initEvents(){
+  document.getElementById('btnStartGame').onclick = function(){
+    loadLevel(unlocked < LEVELS.length ? unlocked : 0);
+  };
+  document.getElementById('btnShowSelect').onclick = function(){
+    renderSelect(); showScreen('screenSelect');
+  };
+  document.getElementById('btnSelectBack').onclick = function(){
+    showScreen('screenTitle');
+  };
+  document.getElementById('selectList').addEventListener('click', function(e){
+    var btn = e.target.closest('.stageBtn');
+    if(btn && !btn.disabled){ loadLevel(parseInt(btn.getAttribute('data-idx'),10)); }
+  });
+  document.getElementById('btnPlayBack').onclick = function(){
+    stopRun(); renderSelect(); showScreen('screenSelect');
+  };
+  document.getElementById('btnRun').onclick = startRun;
+  document.getElementById('btnReset').onclick = resetRuntime;
+  document.getElementById('btnClear').onclick = function(){
+    program = []; cursor = {nodeId:null, slot:'root'};
+    renderProgram(); renderStatus();
+  };
+  document.getElementById('btnReload').onclick = function(){ loadLevel(currentLevelIndex); };
+  document.getElementById('btnSpeed').onclick = function(e){
+    currentSpeed = (currentSpeed===450) ? 120 : 450;
+    e.currentTarget.textContent = (currentSpeed===120) ? '⏩ はやい' : '▶ ふつう';
+  };
+  document.getElementById('btnMute').onclick = function(e){
+    muted = !muted;
+    e.currentTarget.textContent = muted ? '🔇' : '🔊';
+  };
+  document.getElementById('palettePanel').addEventListener('click', function(e){
+    var btn = e.target.closest('.paletteBtn');
+    if(btn){ addStatement(btn.getAttribute('data-type')); }
+  });
+  document.getElementById('programPanel').addEventListener('click', function(e){
+    var delBtn = e.target.closest('[data-action="delete"]');
+    if(delBtn){
+      deleteNodeById(program, parseInt(delBtn.getAttribute('data-id'),10));
+      renderProgram(); renderStatus();
+      return;
+    }
+    var cur = e.target.closest('[data-action="setcursor"]');
+    if(cur){
+      var nid = cur.getAttribute('data-nodeid');
+      cursor = { nodeId: nid==='' ? null : parseInt(nid,10), slot: cur.getAttribute('data-slot') };
+      renderProgram();
+      return;
+    }
+  });
+  document.getElementById('functionPanel').addEventListener('click', function(e){
+    var add = e.target.closest('[data-action="fnadd"]');
+    if(add){
+      functions.combo = functions.combo || [];
+      functions.combo.push({type: add.getAttribute('data-type')});
+      renderFunctionEditor();
+      return;
+    }
+    var del = e.target.closest('[data-action="fndelete"]');
+    if(del){
+      var idx = parseInt(del.getAttribute('data-idx'),10);
+      functions.combo.splice(idx,1);
+      renderFunctionEditor();
+      return;
+    }
+  });
+  document.getElementById('btnCertBack').onclick = function(){
+    renderSelect(); showScreen('screenSelect');
+  };
+}
+
+function init(){
+  loadProgress();
+  initEvents();
+  showScreen('screenTitle');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
