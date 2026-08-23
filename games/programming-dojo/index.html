@@ -78,7 +78,7 @@
   .tileGoal { position:absolute; font-size:20px; }
   .tileEnemy { position:absolute; font-size:20px; }
   .tileEnemy .hpTag { position:absolute; bottom:-4px; right:-6px; background:#c0392b; color:#fff; font-size:9px; border-radius:6px; padding:0 3px; }
-  .tilePlayer { position:absolute; font-size:22px; transition:transform .2s; filter:drop-shadow(0 0 4px #fff59d); }
+  .tilePlayer { position:absolute; font-size:38px; z-index:3; transition:transform .2s; filter:drop-shadow(0 0 5px #fff59d); }
 
   #logPanel { background:#1c0f08; color:#ffe9c2; font-size:12px; padding:10px; border-radius:10px; height:140px; overflow-y:auto; font-family:monospace; }
   .logLine { padding:1px 0; border-bottom:1px dashed rgba(255,255,255,0.08); }
@@ -131,6 +131,7 @@
 
   @media (max-width:700px){
     .tile { width:34px; height:34px; font-size:16px; }
+    .tilePlayer { font-size:30px; }
   }
 </style>
 </head>
