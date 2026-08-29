@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>おもいでアルバム</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; min-height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background: linear-gradient(160deg, #fff4e0 0%, #ffe1f0 45%, #e0f0ff 100%);
+    background-attachment: fixed;
+    color:#3a3060;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  h1,h2 { margin:0; }
+  .screen { display:none; min-height:100vh; }
+  .app { max-width: 620px; margin:0 auto; padding: 14px 12px 30px; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px; }
+  h1.title { font-size:18px; color:#c2456b; text-shadow:0 1px 0 #fff; }
+  .icon-btn {
+    width:44px; height:44px; border-radius:50%; border:none; background:#fff;
+    box-shadow:0 3px 8px rgba(0,0,0,0.18); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:active { transform:scale(0.9); }
+
+  #screenTitle .app { display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:48px; }
+  .titleLogo { font-size:50px; }
+  .titleMain { font-size:22px; font-weight:800; color:#c2456b; margin:6px 0 4px; }
+  .titleSub { color:#8a5a74; font-size:14px; margin-bottom:24px; }
+  .bigBtn {
+    background: linear-gradient(180deg,#ffb37a,#f0813f); border:none; color:#fff;
+    font-weight:800; font-size:17px; padding:15px 30px; border-radius:18px;
+    box-shadow:0 6px 0 #c05f24; margin:6px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #c05f24; }
+  .ghostBtn {
+    background:#fff; border:2px solid #ffd0b0; color:#c2456b; font-weight:800;
+    padding:10px 20px; border-radius:14px; margin:6px;
+  }
+
+  /* ---------- Gallery ---------- */
+  .galleryGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:14px; margin-top:16px; }
+  .galleryCard { background:#fff; border-radius:18px; padding:10px; text-align:center; box-shadow:0 6px 16px rgba(200,100,60,0.16); }
+  .galleryCard:active { transform:scale(0.96); }
+  .galleryThumb { width:100%; aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:#f4f0ea; }
+  .galleryThumb svg { width:100%; height:100%; display:block; }
+  .galleryName { font-size:13px; font-weight:800; color:#c2456b; margin-top:6px; }
+  .galleryProgress { font-size:11px; color:#8a5a74; }
+  .doneTag { color:#2e7d32; font-weight:800; }
+
+  /* ---------- Picture screen ---------- */
+  .playHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .playTitle { font-size:17px; font-weight:800; color:#c2456b; }
+  .stageCard {
+    background:#fffdf9; border-radius:22px; box-shadow:0 12px 28px rgba(0,0,0,0.16);
+    padding:10px; max-width:400px; margin:0 auto; text-align:center;
+  }
+  #pictureSvg { width:100%; height:auto; display:block; border-radius:14px; overflow:hidden; }
+  .tileOverlay { transition: opacity .4s ease; }
+  .progressText { font-size:14px; font-weight:800; color:#c2456b; margin:12px 0 4px; }
+
+  /* ---------- Memory screen ---------- */
+  .memoryGrid { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; max-width:420px; margin:16px auto 0; }
+  .memCard { aspect-ratio:1/1; perspective:600px; }
+  .memCardInner {
+    position:relative; width:100%; height:100%; transition: transform .4s; transform-style:preserve-3d;
+  }
+  .memCard.flipped .memCardInner { transform: rotateY(180deg); }
+  .memCardFace {
+    position:absolute; inset:0; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    backface-visibility:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.14);
+  }
+  .memCardBack { background: linear-gradient(160deg,#ffd0a0,#f0813f); font-size:22px; color:#fff; }
+  .memCardFront { background:#fff; transform: rotateY(180deg); padding:6%; }
+  .memCardFront svg { width:100%; height:100%; }
+  .memCard.matched .memCardFront { background:#eaffea; }
+
+  .celebrate-overlay {
+    position:fixed; inset:0; background: rgba(255,255,255,0.94);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index:20; padding:20px;
+    animation: fadeIn .35s ease;
+  }
+  .celebrate-overlay[hidden] { display:none; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .celebrate-emoji { font-size:56px; animation: bounce .6s ease infinite alternate; }
+  @keyframes bounce { from{ transform:translateY(0);} to{ transform:translateY(-14px);} }
+  .celebrate-text { font-size:22px; color:#c2456b; font-weight:800; margin-top:6px; }
+  .celebrate-sub { font-size:13px; color:#8a5a74; margin-top:6px; }
+  .confetti-piece { position:absolute; top:-16px; width:10px; height:16px; opacity:0.95; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ===== Title ===== -->
+<div id="screenTitle" class="screen">
+  <div class="app">
+    <div class="titleLogo">🖼️✨</div>
+    <div class="titleMain">おもいでアルバム</div>
+    <div class="titleSub">メモリーゲームをクリアして、すてきな えを かんせいさせよう！</div>
+    <button class="bigBtn" id="btnStart">▶ はじめる</button>
+  </div>
+</div>
+
+<!-- ===== Gallery ===== -->
+<div id="screenGallery" class="screen">
+  <div class="app">
+    <header>
+      <button class="icon-btn" id="btnGalleryBack">🏠</button>
+      <h1 class="title">えを えらんでね</h1>
+      <div style="width:44px;"></div>
+    </header>
+    <div class="galleryGrid" id="galleryGrid"></div>
+  </div>
+</div>
+
+<!-- ===== Picture progress ===== -->
+<div id="screenPicture" class="screen">
+  <div class="app">
+    <div class="playHeader">
+      <button class="icon-btn" id="btnPictureBack">◀</button>
+      <div class="playTitle" id="pictureTitle"></div>
+      <div style="width:44px;"></div>
+    </div>
+    <div class="stageCard">
+      <svg id="pictureSvg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <g id="artLayer"></g>
+        <g id="overlayLayer"></g>
+      </svg>
+      <div class="progressText" id="progressText"></div>
+      <button class="bigBtn" id="btnPlayMemory">🎴 メモリーに ちょうせん</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Memory game ===== -->
+<div id="screenMemory" class="screen">
+  <div class="app">
+    <div class="playHeader">
+      <button class="icon-btn" id="btnMemoryBack">◀</button>
+      <div class="playTitle">おなじ えを 2つ みつけてね</div>
+      <div style="width:44px;"></div>
+    </div>
+    <div class="memoryGrid" id="memoryGrid"></div>
+  </div>
+</div>
+
+<div class="celebrate-overlay" id="celebrateOverlay" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== 図形ライブラリ(まちがいさがしと共通の描画関数) ===================== */
+function propSvg(type, cx, cy, scale, color){
+  scale = scale || 1;
+  var s = scale;
+  switch(type){
+    case 'sun': return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(18*s)+'" fill="'+color+'"/>';
+    case 'cloud': return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(26*s)+'" ry="'+(14*s)+'" fill="'+color+'"/>';
+    case 'moon': return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(16*s)+'" fill="'+color+'"/>';
+    case 'star': return '<polygon points="'+starPoints(cx,cy,16*s,7*s)+'" fill="'+color+'"/>';
+    case 'tree': return '<g>' +
+        '<rect x="'+(cx-4*s)+'" y="'+cy+'" width="'+(8*s)+'" height="'+(22*s)+'" fill="#8d6e63"/>' +
+        '<circle cx="'+cx+'" cy="'+(cy-10*s)+'" r="'+(22*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'balloon': return '<g>' +
+        '<line x1="'+cx+'" y1="'+(cy+15*s)+'" x2="'+cx+'" y2="'+(cy+36*s)+'" stroke="#888" stroke-width="1.5"/>' +
+        '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(13*s)+'" ry="'+(16*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'flower': {
+      var petals = '';
+      for(var i=0;i<5;i++){
+        var ang = i*72;
+        petals += '<ellipse cx="'+cx+'" cy="'+(cy-9*s)+'" rx="'+(6*s)+'" ry="'+(9*s)+'" fill="'+color+'" transform="rotate('+ang+' '+cx+' '+cy+')"/>';
+      }
+      return '<g>'+petals+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(5*s)+'" fill="#ffd54f"/></g>';
+    }
+    case 'heart': {
+      var d = 'M '+cx+' '+(cy+12*s)+' C '+(cx-24*s)+' '+(cy-10*s)+', '+(cx-8*s)+' '+(cy-24*s)+', '+cx+' '+(cy-8*s)+
+              ' C '+(cx+8*s)+' '+(cy-24*s)+', '+(cx+24*s)+' '+(cy-10*s)+', '+cx+' '+(cy+12*s)+' Z';
+      return '<path d="'+d+'" fill="'+color+'"/>';
+    }
+    case 'house': return '<g>' +
+        '<rect x="'+(cx-16*s)+'" y="'+cy+'" width="'+(32*s)+'" height="'+(22*s)+'" fill="'+color+'"/>' +
+        '<polygon points="'+(cx-20*s)+','+cy+' '+cx+','+(cy-18*s)+' '+(cx+20*s)+','+cy+'" fill="#8d6e63"/>' +
+      '</g>';
+    case 'bird': return '<path d="M '+(cx-14*s)+' '+cy+' Q '+(cx-4*s)+' '+(cy-10*s)+' '+cx+' '+cy+' Q '+(cx+4*s)+' '+(cy-10*s)+' '+(cx+14*s)+' '+cy+'" fill="none" stroke="'+color+'" stroke-width="'+(3*s)+'" stroke-linecap="round"/>';
+    case 'book': return '<g>' +
+        '<rect x="'+(cx-16*s)+'" y="'+(cy-12*s)+'" width="'+(32*s)+'" height="'+(24*s)+'" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+(cy-12*s)+'" x2="'+cx+'" y2="'+(cy+12*s)+'" stroke="#fff" stroke-width="2"/>' +
+      '</g>';
+    case 'gift': return '<g>' +
+        '<rect x="'+(cx-15*s)+'" y="'+(cy-12*s)+'" width="'+(30*s)+'" height="'+(24*s)+'" fill="'+color+'"/>' +
+        '<rect x="'+(cx-3*s)+'" y="'+(cy-12*s)+'" width="'+(6*s)+'" height="'+(24*s)+'" fill="#fff"/>' +
+        '<rect x="'+(cx-15*s)+'" y="'+(cy-3*s)+'" width="'+(30*s)+'" height="'+(6*s)+'" fill="#fff"/>' +
+      '</g>';
+    case 'fish': return '<g>' +
+        '<polygon points="'+(cx-18*s)+','+cy+' '+(cx+10*s)+','+(cy-14*s)+' '+(cx+10*s)+','+(cy+14*s)+'" fill="'+color+'"/>' +
+        '<polygon points="'+(cx+10*s)+','+cy+' '+(cx+26*s)+','+(cy-10*s)+' '+(cx+26*s)+','+(cy+10*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'umbrella': return '<g>' +
+        '<path d="M '+(cx-20*s)+' '+cy+' Q '+cx+' '+(cy-28*s)+' '+(cx+20*s)+' '+cy+' Z" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+cy+'" x2="'+cx+'" y2="'+(cy+24*s)+'" stroke="#5d4037" stroke-width="2"/>' +
+      '</g>';
+    case 'kite': return '<g>' +
+        '<polygon points="'+cx+','+(cy-20*s)+' '+(cx+14*s)+','+cy+' '+cx+','+(cy+20*s)+' '+(cx-14*s)+','+cy+'" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+(cy+20*s)+'" x2="'+cx+'" y2="'+(cy+34*s)+'" stroke="#888" stroke-width="1.5"/>' +
+      '</g>';
+    case 'leaf': return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(10*s)+'" ry="'+(18*s)+'" fill="'+color+'" transform="rotate(30 '+cx+' '+cy+')"/>';
+    case 'butterfly': return '<g>' +
+        '<ellipse cx="'+(cx-10*s)+'" cy="'+(cy-6*s)+'" rx="'+(11*s)+'" ry="'+(8*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx+10*s)+'" cy="'+(cy-6*s)+'" rx="'+(11*s)+'" ry="'+(8*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx-9*s)+'" cy="'+(cy+7*s)+'" rx="'+(8*s)+'" ry="'+(6*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx+9*s)+'" cy="'+(cy+7*s)+'" rx="'+(8*s)+'" ry="'+(6*s)+'" fill="'+color+'"/>' +
+        '<rect x="'+(cx-1.5*s)+'" y="'+(cy-10*s)+'" width="'+(3*s)+'" height="'+(20*s)+'" fill="#5d4037"/>' +
+      '</g>';
+    case 'note': return '<g>' +
+        '<circle cx="'+cx+'" cy="'+(cy+10*s)+'" r="'+(6*s)+'" fill="'+color+'"/>' +
+        '<line x1="'+(cx+6*s)+'" y1="'+(cy+10*s)+'" x2="'+(cx+6*s)+'" y2="'+(cy-16*s)+'" stroke="'+color+'" stroke-width="'+(2.5*s)+'"/>' +
+      '</g>';
+    case 'cupcake': return '<g>' +
+        '<polygon points="'+(cx-14*s)+','+(cy+16*s)+' '+(cx+14*s)+','+(cy+16*s)+' '+(cx+9*s)+','+(cy-2*s)+' '+(cx-9*s)+','+(cy-2*s)+'" fill="'+color+'"/>' +
+        '<circle cx="'+cx+'" cy="'+(cy-10*s)+'" r="'+(11*s)+'" fill="#fff59d"/>' +
+      '</g>';
+    default: return '';
+  }
+}
+function starPoints(cx, cy, rOuter, rInner){
+  var pts = [];
+  for(var i=0;i<10;i++){
+    var r = (i%2===0) ? rOuter : rInner;
+    var ang = (Math.PI/5)*i - Math.PI/2;
+    pts.push((cx+r*Math.cos(ang)).toFixed(1) + ',' + (cy+r*Math.sin(ang)).toFixed(1));
+  }
+  return pts.join(' ');
+}
+function characterSvg(type, cx, cy, scale, hairColor, outfitColor){
+  scale = scale || 1;
+  var s = scale;
+  var body = '<path d="M '+(cx-24*s)+' '+(cy+40*s)+' L '+(cx+24*s)+' '+(cy+40*s)+' L '+(cx+16*s)+' '+(cy-6*s)+' L '+(cx-16*s)+' '+(cy-6*s)+' Z" fill="'+outfitColor+'"/>';
+  var hair = '<ellipse cx="'+cx+'" cy="'+(cy-42*s)+'" rx="'+(26*s)+'" ry="'+(20*s)+'" fill="'+hairColor+'"/>';
+  var head = '<circle cx="'+cx+'" cy="'+(cy-30*s)+'" r="'+(22*s)+'" fill="#ffe0c2"/>';
+  var eyes = '<circle cx="'+(cx-8*s)+'" cy="'+(cy-28*s)+'" r="'+(3*s)+'" fill="#333"/>' +
+             '<circle cx="'+(cx+8*s)+'" cy="'+(cy-28*s)+'" r="'+(3*s)+'" fill="#333"/>';
+  var extra = '';
+  if(type==='cat'){
+    extra = '<polygon points="'+(cx-24*s)+','+(cy-50*s)+' '+(cx-10*s)+','+(cy-70*s)+' '+(cx-4*s)+','+(cy-48*s)+'" fill="'+hairColor+'"/>' +
+            '<polygon points="'+(cx+24*s)+','+(cy-50*s)+' '+(cx+10*s)+','+(cy-70*s)+' '+(cx+4*s)+','+(cy-48*s)+'" fill="'+hairColor+'"/>';
+  } else if(type==='robot'){
+    extra = '<rect x="'+(cx-3*s)+'" y="'+(cy-66*s)+'" width="'+(6*s)+'" height="'+(14*s)+'" fill="#999"/>' +
+            '<circle cx="'+cx+'" cy="'+(cy-70*s)+'" r="'+(5*s)+'" fill="#ff6f6f"/>';
+  }
+  return '<g>' + body + hair + head + eyes + extra + '</g>';
+}
+
+/* ===================== おもいでアルバム: エンジン ===================== */
+var GRID_N = 3;
+var PAIRS_PER_ROUND = 4;
+var ICON_POOL = ['sun','cloud','moon','star','tree','balloon','flower','heart',
+  'house','bird','book','gift','fish','umbrella','kite','leaf','butterfly','note','cupcake'];
+var ICON_COLOR = {
+  sun:'#ffd54f', cloud:'#90caf9', moon:'#fff59d', star:'#ffca28', tree:'#66bb6a',
+  balloon:'#ef5350', flower:'#f06292', heart:'#f06292', house:'#ce93d8', bird:'#8d6e63',
+  book:'#8d6e63', gift:'#4fc3f7', fish:'#4fc3f7', umbrella:'#ef5350', kite:'#ba68c8',
+  leaf:'#66bb6a', butterfly:'#ba68c8', note:'#7e57c2', cupcake:'#ffca28'
+};
+
+function shuffleArray(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function buildMemoryRound(){
+  var types = shuffleArray(ICON_POOL).slice(0, PAIRS_PER_ROUND);
+  var deck = [];
+  types.forEach(function(t){ deck.push(t); deck.push(t); });
+  deck = shuffleArray(deck);
+  return deck.map(function(type){ return { type:type, matched:false, faceUp:false }; });
+}
+function flipCard(cards, flippedIdx, idx){
+  if(idx<0 || idx>=cards.length) return { changed:false, flipped:flippedIdx, result:null };
+  var c = cards[idx];
+  if(c.matched || c.faceUp) return { changed:false, flipped:flippedIdx, result:null };
+  if(flippedIdx.length>=2) return { changed:false, flipped:flippedIdx, result:null };
+  c.faceUp = true;
+  var newFlipped = flippedIdx.concat([idx]);
+  if(newFlipped.length<2) return { changed:true, flipped:newFlipped, result:null };
+  var a = cards[newFlipped[0]], b = cards[newFlipped[1]];
+  if(a.type === b.type){
+    a.matched = true; b.matched = true;
+    return { changed:true, flipped:[], result:'match' };
+  }
+  return { changed:true, flipped:newFlipped, result:'pending-mismatch' };
+}
+function resolveMismatch(cards, flippedIdx){
+  flippedIdx.forEach(function(i){ cards[i].faceUp = false; });
+  return [];
+}
+function isRoundComplete(cards){ return cards.every(function(c){ return c.matched; }); }
+
+function newPictureState(){
+  var arr = [];
+  for(var i=0;i<GRID_N*GRID_N;i++) arr.push(false);
+  return { revealed: arr };
+}
+function revealRandomTile(state){
+  var hidden = [];
+  state.revealed.forEach(function(r,i){ if(!r) hidden.push(i); });
+  if(hidden.length===0) return -1;
+  var pick = hidden[Math.floor(Math.random()*hidden.length)];
+  state.revealed[pick] = true;
+  return pick;
+}
+function isPictureComplete(state){ return state.revealed.every(function(r){ return r; }); }
+function revealedCount(state){ return state.revealed.filter(function(r){ return r; }).length; }
+
+/* ===================== 絵のデータ (5枚) ===================== */
+var PICTURES = [
+  { id:1, title:'こうえんのひ', bg:'#cdeeff',
+    character:{type:'girl', x:150,y:230, hair:'#8b5a2b', outfit:'#ff8fc7'},
+    props:[
+      {type:'sun', x:60,y:55, color:'#ffd54f'},
+      {type:'cloud', x:220,y:65, color:'#ffffff'},
+      {type:'tree', x:245,y:215, color:'#66bb6a'},
+      {type:'balloon', x:65,y:150, color:'#ef5350'},
+      {type:'flower', x:220,y:265, color:'#f06292'}
+    ]
+  },
+  { id:2, title:'ほしぞら', bg:'#2d2b55',
+    character:{type:'cat', x:150,y:230, hair:'#5c4a8a', outfit:'#7e57c2'},
+    props:[
+      {type:'moon', x:240,y:55, color:'#fff59d'},
+      {type:'star', x:60,y:50, color:'#ffffff'},
+      {type:'star', x:100,y:85, scale:0.8, color:'#ffffff'},
+      {type:'kite', x:190,y:150, color:'#ff8a65'},
+      {type:'gift', x:70,y:250, color:'#4fc3f7'}
+    ]
+  },
+  { id:3, title:'おはなばたけ', bg:'#d9f7e6',
+    character:{type:'girl', x:150,y:230, hair:'#e0a35c', outfit:'#ba68c8'},
+    props:[
+      {type:'flower', x:70,y:240, color:'#f06292'},
+      {type:'flower', x:150,y:255, color:'#ba68c8'},
+      {type:'flower', x:230,y:240, color:'#ffd54f'},
+      {type:'butterfly', x:180,y:140, color:'#ba68c8'},
+      {type:'sun', x:50,y:50, color:'#ffd54f'}
+    ]
+  },
+  { id:4, title:'まほうのおしろ', bg:'#f3e5f5',
+    character:null,
+    props:[
+      {type:'house', x:100,y:190, scale:1.6, color:'#ce93d8'},
+      {type:'house', x:200,y:190, scale:1.6, color:'#ce93d8'},
+      {type:'star', x:150,y:80, scale:1.2, color:'#ffd54f'},
+      {type:'flower', x:60,y:260, color:'#f06292'},
+      {type:'flower', x:240,y:260, color:'#4fc3f7'}
+    ]
+  },
+  { id:5, title:'おかしのくに', bg:'#ffe0f0',
+    character:{type:'robot', x:150,y:230, hair:'#90a4ae', outfit:'#f06292'},
+    props:[
+      {type:'cupcake', x:70,y:220, color:'#ffca28'},
+      {type:'cupcake', x:230,y:220, scale:0.9, color:'#4fc3f7'},
+      {type:'gift', x:100,y:150, color:'#ef5350'},
+      {type:'heart', x:200,y:120, color:'#ba68c8'},
+      {type:'star', x:150,y:60, color:'#ffd54f'}
+    ]
+  }
+];
+
+/* ===================== 進捗保存 ===================== */
+function loadAllProgress(){
+  try{ return JSON.parse(localStorage.getItem('album_progress')||'{}'); }catch(e){ return {}; }
+}
+function saveAllProgress(obj){ try{ localStorage.setItem('album_progress', JSON.stringify(obj)); }catch(e){} }
+function getPictureState(id){
+  var all = loadAllProgress();
+  if(!all[id]){ all[id] = newPictureState(); saveAllProgress(all); }
+  return all[id];
+}
+function savePictureState(id, state){
+  var all = loadAllProgress();
+  all[id] = state;
+  saveAllProgress(all);
+}
+
+/* ===================== 音 ===================== */
+var audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function playTone(freq,dur,delay,type){
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.22,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playFlip(){ playTone(500+Math.random()*100, 0.08); }
+function playMatch(){ [700,900].forEach(function(f,i){ playTone(f,0.15,i*0.1); }); }
+function playMismatch(){ playTone(220, 0.15); }
+function playReveal(){ [523,659,784].forEach(function(f,i){ playTone(f,0.2,i*0.1); }); }
+function playComplete(){ [523,659,784,1046].forEach(function(f,i){ playTone(f,0.28,i*0.15); }); }
+
+/* ===================== 画面/状態 ===================== */
+function showScreen(name){
+  ['screenTitle','screenGallery','screenPicture','screenMemory'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'block' : 'none';
+  });
+}
+
+var currentPictureIndex = 0;
+var memCards = [];
+var memFlipped = [];
+var memLock = false;
+
+function renderPictureArt(layerId, picture){
+  var html = '';
+  picture.props.forEach(function(p){
+    html += propSvg(p.type, p.x, p.y, p.scale||1, p.color);
+  });
+  if(picture.character){
+    html += characterSvg(picture.character.type, picture.character.x, picture.character.y, 1, picture.character.hair, picture.character.outfit);
+  }
+  document.getElementById(layerId).innerHTML = html;
+}
+
+function renderThumb(picture, state){
+  var tileSize = 300/GRID_N;
+  var html = '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect width="300" height="300" fill="'+picture.bg+'"/><g id="art_'+picture.id+'">';
+  picture.props.forEach(function(p){ html += propSvg(p.type, p.x, p.y, p.scale||1, p.color); });
+  if(picture.character){
+    html += characterSvg(picture.character.type, picture.character.x, picture.character.y, 1, picture.character.hair, picture.character.outfit);
+  }
+  html += '</g>';
+  for(var i=0;i<GRID_N*GRID_N;i++){
+    if(!state.revealed[i]){
+      var col = i % GRID_N, row = Math.floor(i/GRID_N);
+      html += '<rect x="'+(col*tileSize)+'" y="'+(row*tileSize)+'" width="'+tileSize+'" height="'+tileSize+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>';
+    }
+  }
+  html += '</svg>';
+  return html;
+}
+
+function renderGallery(){
+  var el = document.getElementById('galleryGrid');
+  var html = '';
+  PICTURES.forEach(function(picture, idx){
+    var state = getPictureState(picture.id);
+    var done = isPictureComplete(state);
+    html += '<button class="galleryCard" data-idx="'+idx+'">' +
+      '<div class="galleryThumb">'+renderThumb(picture, state)+'</div>' +
+      '<div class="galleryName">'+picture.title+'</div>' +
+      '<div class="galleryProgress">'+(done ? '<span class="doneTag">✅ かんせい!</span>' : revealedCount(state)+' / '+(GRID_N*GRID_N))+'</div>' +
+      '</button>';
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.galleryCard').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openPicture(parseInt(btn.getAttribute('data-idx'),10));
+    });
+  });
+}
+
+function openPicture(idx){
+  currentPictureIndex = idx;
+  var picture = PICTURES[idx];
+  var state = getPictureState(picture.id);
+  document.getElementById('pictureTitle').textContent = picture.title;
+  document.getElementById('pictureSvg').style.background = picture.bg;
+  renderPictureArt('artLayer', picture);
+  renderOverlay(state);
+  updateProgressUI(state);
+  showScreen('screenPicture');
+}
+
+function renderOverlay(state){
+  var tileSize = 300/GRID_N;
+  var html = '';
+  for(var i=0;i<GRID_N*GRID_N;i++){
+    if(!state.revealed[i]){
+      var col = i % GRID_N, row = Math.floor(i/GRID_N);
+      html += '<rect class="tileOverlay" data-tile="'+i+'" x="'+(col*tileSize)+'" y="'+(row*tileSize)+'" width="'+tileSize+'" height="'+tileSize+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>' +
+        '<text x="'+(col*tileSize+tileSize/2)+'" y="'+(row*tileSize+tileSize/2+7)+'" font-size="26" text-anchor="middle" fill="#e0a35c" pointer-events="none">?</text>';
+    }
+  }
+  document.getElementById('overlayLayer').innerHTML = html;
+}
+
+function updateProgressUI(state){
+  var done = isPictureComplete(state);
+  document.getElementById('progressText').textContent = done ? '🎉 かんせい しました!' : (revealedCount(state) + ' / ' + (GRID_N*GRID_N) + ' ピース');
+  var btn = document.getElementById('btnPlayMemory');
+  btn.style.display = done ? 'none' : 'block';
+}
+
+function startMemoryRound(){
+  memCards = buildMemoryRound();
+  memFlipped = [];
+  memLock = false;
+  renderMemoryGrid();
+  showScreen('screenMemory');
+}
+
+function renderMemoryGrid(){
+  var el = document.getElementById('memoryGrid');
+  var html = memCards.map(function(c, i){
+    var cls = 'memCard' + (c.faceUp||c.matched ? ' flipped' : '') + (c.matched ? ' matched' : '');
+    return '<div class="'+cls+'" data-idx="'+i+'">' +
+      '<div class="memCardInner">' +
+        '<div class="memCardFace memCardBack">❓</div>' +
+        '<div class="memCardFace memCardFront"><svg viewBox="0 0 60 60">'+propSvg(c.type,30,30,0.9,ICON_COLOR[c.type]||'#888')+'</svg></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el.innerHTML = html;
+  el.querySelectorAll('.memCard').forEach(function(cardEl){
+    cardEl.addEventListener('click', function(){
+      onMemoryCardTap(parseInt(cardEl.getAttribute('data-idx'),10));
+    });
+  });
+}
+
+function onMemoryCardTap(idx){
+  if(memLock) return;
+  var res = flipCard(memCards, memFlipped, idx);
+  if(!res.changed) return;
+  memFlipped = res.flipped;
+  playFlip();
+  renderMemoryGrid();
+  if(res.result === 'match'){
+    playMatch();
+    if(isRoundComplete(memCards)){
+      memLock = true;
+      setTimeout(onMemoryRoundWin, 500);
+    }
+  } else if(res.result === 'pending-mismatch'){
+    memLock = true;
+    setTimeout(function(){
+      playMismatch();
+      memFlipped = resolveMismatch(memCards, memFlipped);
+      memLock = false;
+      renderMemoryGrid();
+    }, 800);
+  }
+}
+
+function onMemoryRoundWin(){
+  var picture = PICTURES[currentPictureIndex];
+  var state = getPictureState(picture.id);
+  var revealedIdx = revealRandomTile(state);
+  savePictureState(picture.id, state);
+  playReveal();
+  if(isPictureComplete(state)){
+    setTimeout(function(){
+      playComplete();
+      celebrateComplete(picture);
+    }, 300);
+  } else {
+    openPicture(currentPictureIndex);
+  }
+}
+
+var confettiColors = ['#ffb37a','#ffd700','#70a1ff','#7bed9f','#ff8fc7','#ba68c8'];
+function celebrateComplete(picture){
+  var overlay = document.getElementById('celebrateOverlay');
+  overlay.innerHTML =
+    '<div class="celebrate-emoji">🎉</div>' +
+    '<div class="celebrate-text">「'+picture.title+'」が かんせいしたよ!✨</div>' +
+    '<div class="celebrate-sub">すてきな さくひんが できたね!(タップでとじる)</div>';
+  for (var i=0; i<28; i++){
+    var piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+    var dur = 1.2 + Math.random()*1.3;
+    var delay = Math.random()*0.6;
+    piece.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+    overlay.appendChild(piece);
+  }
+  overlay.hidden = false;
+  overlay.addEventListener('click', function closeIt(){
+    overlay.hidden = true;
+    overlay.removeEventListener('click', closeIt);
+    renderGallery();
+    showScreen('screenGallery');
+  });
+}
+
+var styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(420px) rotate(360deg); opacity: 0.25; } }';
+document.head.appendChild(styleEl);
+
+function init(){
+  document.getElementById('btnStart').addEventListener('click', function(){
+    renderGallery();
+    showScreen('screenGallery');
+  });
+  document.getElementById('btnGalleryBack').addEventListener('click', function(){ showScreen('screenTitle'); });
+  document.getElementById('btnPictureBack').addEventListener('click', function(){
+    renderGallery();
+    showScreen('screenGallery');
+  });
+  document.getElementById('btnPlayMemory').addEventListener('click', startMemoryRound);
+  document.getElementById('btnMemoryBack').addEventListener('click', function(){
+    openPicture(currentPictureIndex);
+  });
+  showScreen('screenTitle');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
