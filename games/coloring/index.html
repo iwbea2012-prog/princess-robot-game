@@ -49,7 +49,7 @@
   }
   .page { display:none; position: relative; }
   .page.active { display:block; }
-  .svg-wrap svg { width:100%; height:auto; display:block; touch-action: manipulation; }
+  .svg-wrap svg { width:100%; height:auto; display:block; touch-action: none; -webkit-touch-callout: none; }
   .svg-wrap .colorable { cursor:pointer; transition: fill .12s ease; }
   .svg-wrap .colorable.pop { animation: popFlash .22s ease; }
   @keyframes popFlash { 0%{ filter:brightness(1); } 50%{ filter:brightness(1.55) saturate(1.3); } 100%{ filter:brightness(1); } }
@@ -546,17 +546,42 @@
   styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(420px) rotate(360deg); opacity: 0.25; } }';
   document.head.appendChild(styleEl);
 
-  document.querySelectorAll('.colorable').forEach(function(el){
-    el.addEventListener('click', function(e){
-      el.setAttribute('fill', currentColor);
-      el.classList.remove('pop');
-      void el.offsetWidth;
-      el.classList.add('pop');
-      playPop();
-      var pageEl = el.closest('.page');
-      if (isPageComplete(pageEl)) celebrate(pageEl);
+  function colorElement(el){
+    if (el.getAttribute('fill') === currentColor) return;
+    el.setAttribute('fill', currentColor);
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    playPop();
+    var pageEl = el.closest('.page');
+    if (isPageComplete(pageEl)) celebrate(pageEl);
+  }
+
+  // 指・マウス・Apple Pencilのどれでも、なぞった場所をそのまま塗れるようにする。
+  // (単純なクリック判定だと、ペンで軽くなぞっただけでも「ドラッグ」とみなされ
+  //  クリックが発生せず塗られない・別の図形の境界で反応してズレる、という
+  //  不具合が起きるため、pointer系イベントで逐次ヒットテストする方式にする)
+  var isPointerDown = false;
+  function paintAtPoint(x, y){
+    var el = document.elementFromPoint(x, y);
+    if (el && el.classList && el.classList.contains('colorable')){
+      colorElement(el);
+    }
+  }
+  document.querySelectorAll('.svg-wrap svg').forEach(function(svg){
+    svg.addEventListener('pointerdown', function(e){
+      isPointerDown = true;
+      paintAtPoint(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    svg.addEventListener('pointermove', function(e){
+      if (!isPointerDown) return;
+      paintAtPoint(e.clientX, e.clientY);
     });
   });
+  window.addEventListener('pointerup', function(){ isPointerDown = false; });
+  window.addEventListener('pointercancel', function(){ isPointerDown = false; });
+  window.addEventListener('pointerleave', function(){ isPointerDown = false; });
 
 })();
 </script>
