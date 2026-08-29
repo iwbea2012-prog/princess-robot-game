@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ドライブゲーム</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; min-height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background: linear-gradient(160deg, #cdeeff 0%, #e0f7ff 45%, #fff4e0 100%);
+    background-attachment: fixed;
+    color:#1f3a4a;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  h1,h2 { margin:0; }
+  .screen { display:none; min-height:100vh; }
+  .app { max-width: 420px; margin:0 auto; padding: 14px 12px 30px; display:flex; flex-direction:column; align-items:center; }
+
+  .titleLogo { font-size:50px; margin-top:30px; }
+  .titleMain { font-size:23px; font-weight:800; color:#1e6fa8; margin:6px 0 4px; text-align:center; }
+  .titleSub { color:#4a7a94; font-size:14px; margin-bottom:18px; text-align:center; }
+  .bestBox { background:#fff; border-radius:16px; padding:10px 20px; margin-bottom:18px; box-shadow:0 6px 16px rgba(30,110,168,0.16); text-align:center; }
+  .bestLabel { font-size:11px; color:#5c8aa4; }
+  .bestNum { font-size:22px; font-weight:800; color:#1e6fa8; }
+  .bigBtn {
+    background: linear-gradient(180deg,#7fd8ff,#2ea4e0); border:none; color:#fff;
+    font-weight:800; font-size:17px; padding:15px 30px; border-radius:18px;
+    box-shadow:0 6px 0 #1a7ab0; margin:6px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #1a7ab0; }
+  .ghostBtn {
+    background:#fff; border:2px solid #bfe6fa; color:#1e6fa8; font-weight:800;
+    padding:10px 20px; border-radius:14px; margin:6px;
+  }
+
+  .hud { display:flex; align-items:center; justify-content:space-between; width:100%; max-width:300px; margin-bottom:8px; }
+  .hearts { font-size:18px; }
+  .scoreBox { font-size:16px; font-weight:800; color:#1e6fa8; }
+
+  .canvasWrap { position:relative; width:100%; max-width:300px; }
+  #gameCanvas { width:100%; height:auto; display:block; border-radius:14px; box-shadow:0 10px 26px rgba(0,0,0,0.22); background:#607d8b; }
+
+  .countdownOverlay, .overOverlay {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(20,40,60,0.55); border-radius:14px; color:#fff; text-align:center; padding:16px;
+  }
+  .countdownOverlay[hidden], .overOverlay[hidden] { display:none; }
+  .countNum { font-size:64px; font-weight:800; text-shadow:0 4px 0 rgba(0,0,0,0.3); }
+  .overEmoji { font-size:48px; }
+  .overTitle { font-size:20px; font-weight:800; margin-top:6px; }
+  .overScore { font-size:15px; margin-top:8px; }
+
+  .controlRow { display:flex; justify-content:space-between; width:100%; max-width:300px; margin-top:14px; gap:16px; }
+  .ctrlBtn {
+    flex:1; height:78px; border-radius:20px; border:none; font-size:34px;
+    background:#fff; box-shadow:0 6px 0 #b8dcee;
+    display:flex; align-items:center; justify-content:center; color:#1e6fa8;
+  }
+  .ctrlBtn:active { transform:translateY(5px); box-shadow:none; }
+</style>
+</head>
+<body>
+
+<!-- ===== Title ===== -->
+<div id="screenTitle" class="screen">
+  <div class="app">
+    <div class="titleLogo">🏎️💨</div>
+    <div class="titleMain">ドライブゲーム</div>
+    <div class="titleSub">みぎ・ひだりに うごいて、しょうがいぶつを よけよう！</div>
+    <div class="bestBox">
+      <div class="bestLabel">🏆 さいこうきろく</div>
+      <div class="bestNum" id="bestScoreNum">0</div>
+    </div>
+    <button class="bigBtn" id="btnStart">▶ はじめる</button>
+  </div>
+</div>
+
+<!-- ===== Play ===== -->
+<div id="screenPlay" class="screen">
+  <div class="app">
+    <div class="hud">
+      <div class="hearts" id="heartsDisplay"></div>
+      <div class="scoreBox" id="scoreDisplay">0</div>
+    </div>
+    <div class="canvasWrap">
+      <canvas id="gameCanvas" width="300" height="500"></canvas>
+      <div class="countdownOverlay" id="countdownOverlay" hidden><div class="countNum" id="countNum">3</div></div>
+      <div class="overOverlay" id="overOverlay" hidden>
+        <div class="overEmoji">💥</div>
+        <div class="overTitle">おつかれさま！</div>
+        <div class="overScore" id="overScoreText"></div>
+        <button class="bigBtn" id="btnRetry">▶ もういちど</button>
+        <button class="ghostBtn" id="btnToTitleFromOver">🏠 タイトルへ</button>
+      </div>
+    </div>
+    <div class="controlRow">
+      <button class="ctrlBtn" id="btnLeft">⬅️</button>
+      <button class="ctrlBtn" id="btnRight">➡️</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== ドライブゲーム: コアロジック ===================== */
+var LANES = 3;
+var CANVAS_W = 300;
+var CANVAS_H = 500;
+var CAR_Y = 420;
+var COLLIDE_DIST = 34;
+var DANGER_Y = 260;
+
+function laneX(lane){
+  var laneWidth = CANVAS_W / LANES;
+  return laneWidth * lane + laneWidth/2;
+}
+function createGameState(){
+  return {
+    playerLane: 1,
+    obstacles: [],
+    coins: [],
+    lives: 3,
+    score: 0,
+    speed: 2.0,
+    spawnTimer: 40,
+    coinTimer: 90,
+    invuln: 0,
+    over: false
+  };
+}
+function moveLeft(state){ if(state.over) return; if(state.playerLane>0) state.playerLane--; }
+function moveRight(state){ if(state.over) return; if(state.playerLane<LANES-1) state.playerLane++; }
+function occupiedDangerLanes(obstacles){
+  var set = {};
+  obstacles.forEach(function(o){ if(o.y < DANGER_Y) set[o.lane] = true; });
+  return set;
+}
+function trySpawnObstacle(state){
+  var danger = occupiedDangerLanes(state.obstacles);
+  var freeLanes = [];
+  for(var l=0;l<LANES;l++){ if(!danger[l]) freeLanes.push(l); }
+  if(freeLanes.length < 2) return false;
+  var lane = freeLanes[Math.floor(Math.random()*freeLanes.length)];
+  state.obstacles.push({ lane:lane, y:-40, hit:false });
+  return true;
+}
+function trySpawnCoin(state){
+  var danger = occupiedDangerLanes(state.obstacles);
+  var freeLanes = [];
+  for(var l=0;l<LANES;l++){ if(!danger[l]) freeLanes.push(l); }
+  if(freeLanes.length === 0) return false;
+  var lane = freeLanes[Math.floor(Math.random()*freeLanes.length)];
+  state.coins.push({ lane:lane, y:-40, collected:false });
+  return true;
+}
+function stepGame(state, dt){
+  dt = dt || 1;
+  if(state.over) return;
+  state.speed = Math.min(state.speed + 0.0006*dt, 6);
+  state.score += dt * (1 + state.speed*0.4);
+  state.spawnTimer -= dt;
+  state.coinTimer -= dt;
+  if(state.spawnTimer <= 0){
+    trySpawnObstacle(state);
+    state.spawnTimer = Math.max(55 - state.speed*5, 22);
+  }
+  if(state.coinTimer <= 0){
+    trySpawnCoin(state);
+    state.coinTimer = 90 + Math.random()*60;
+  }
+  state.obstacles.forEach(function(o){ o.y += state.speed*dt; });
+  state.coins.forEach(function(c){ c.y += state.speed*dt; });
+  if(state.invuln > 0) state.invuln -= dt;
+  state.obstacles.forEach(function(o){
+    if(!o.hit && o.lane===state.playerLane && Math.abs(o.y-CAR_Y) < COLLIDE_DIST){
+      o.hit = true;
+      if(state.invuln <= 0){
+        state.lives -= 1;
+        state.invuln = 70;
+        if(state.lives <= 0){ state.lives = 0; state.over = true; }
+      }
+    }
+  });
+  state.coins.forEach(function(c){
+    if(!c.collected && c.lane===state.playerLane && Math.abs(c.y-CAR_Y) < COLLIDE_DIST){
+      c.collected = true;
+      state.score += 20;
+    }
+  });
+  state.obstacles = state.obstacles.filter(function(o){ return o.y < CANVAS_H+60; });
+  state.coins = state.coins.filter(function(c){ return c.y < CANVAS_H+60 && !c.collected; });
+}
+
+/* ===================== 描画 ===================== */
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+var roadScroll = 0;
+
+function drawCarShape(x, y, bodyColor, withFace){
+  ctx.save();
+  ctx.translate(x, y);
+  // wheels
+  ctx.fillStyle = '#2b2b2b';
+  ctx.beginPath(); ctx.ellipse(-16, -20, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(16, -20, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-16, 20, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(16, 20, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+  // body
+  ctx.fillStyle = bodyColor;
+  roundRect(ctx, -20, -34, 40, 68, 12);
+  ctx.fill();
+  // windows
+  ctx.fillStyle = '#dff6ff';
+  roundRect(ctx, -13, -22, 26, 20, 6);
+  ctx.fill();
+  if(withFace){
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(-6, -13, 2.2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, -13, 2.2, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function drawCoin(x, y){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#ffd54f';
+  ctx.strokeStyle = '#e0a53a';
+  ctx.lineWidth = 2;
+  var pts = [];
+  for(var i=0;i<10;i++){
+    var r = (i%2===0) ? 13 : 6;
+    var ang = (Math.PI/5)*i - Math.PI/2;
+    pts.push([r*Math.cos(ang), r*Math.sin(ang)]);
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for(var j=1;j<pts.length;j++) ctx.lineTo(pts[j][0], pts[j][1]);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function drawRoad(state){
+  ctx.fillStyle = '#607d8b';
+  ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([18,16]);
+  for(var l=1;l<LANES;l++){
+    var x = (CANVAS_W/LANES)*l;
+    ctx.lineDashOffset = -roadScroll;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, CANVAS_H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+function render(state){
+  drawRoad(state);
+  state.coins.forEach(function(c){ drawCoin(laneX(c.lane), c.y); });
+  state.obstacles.forEach(function(o){ drawCarShape(laneX(o.lane), o.y, '#ef5350', false); });
+  var flashHidden = state.invuln>0 && Math.floor(state.invuln/6)%2===0;
+  if(!flashHidden){
+    drawCarShape(laneX(state.playerLane), CAR_Y, '#42a5f5', true);
+  }
+}
+
+/* ===================== 音 ===================== */
+var audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function playTone(freq,dur,delay,type){
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.22,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playMove(){ playTone(500, 0.06); }
+function playCoin(){ [800,1100].forEach(function(f,i){ playTone(f,0.1,i*0.06); }); }
+function playCrash(){ playTone(120, 0.25, 0, 'sawtooth'); }
+function playGameOver(){ [400,340,280].forEach(function(f,i){ playTone(f,0.3,i*0.18,'triangle'); }); }
+
+/* ===================== ゲームループ / 画面制御 ===================== */
+var state = null;
+var rafId = null;
+var lastTs = null;
+var countingDown = false;
+var prevLives = 3;
+
+function loadBest(){ try{ return parseInt(localStorage.getItem('drive_best')||'0',10)||0; }catch(e){ return 0; } }
+function saveBest(v){ try{ localStorage.setItem('drive_best', String(v)); }catch(e){} }
+
+function showScreen(name){
+  ['screenTitle','screenPlay'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'block' : 'none';
+  });
+}
+
+function updateHud(){
+  var hearts = '';
+  for(var i=0;i<3;i++) hearts += (i < state.lives) ? '❤️' : '🤍';
+  document.getElementById('heartsDisplay').textContent = hearts;
+  document.getElementById('scoreDisplay').textContent = '⭐ ' + Math.floor(state.score);
+}
+
+function loop(ts){
+  if(!lastTs) lastTs = ts;
+  var dtFrames = (ts - lastTs) / (1000/60);
+  dtFrames = Math.min(dtFrames, 3);
+  lastTs = ts;
+
+  if(!countingDown && state && !state.over){
+    var livesBefore = state.lives;
+    stepGame(state, dtFrames);
+    roadScroll = (roadScroll + state.speed*dtFrames) % 34;
+    if(state.lives < livesBefore) playCrash();
+    render(state);
+    updateHud();
+    if(state.over){
+      onGameOver();
+      return;
+    }
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+function startCountdown(cb){
+  countingDown = true;
+  var overlay = document.getElementById('countdownOverlay');
+  var numEl = document.getElementById('countNum');
+  overlay.hidden = false;
+  var n = 3;
+  numEl.textContent = n;
+  var timer = setInterval(function(){
+    n--;
+    if(n<=0){
+      clearInterval(timer);
+      overlay.hidden = true;
+      countingDown = false;
+      cb();
+    } else {
+      numEl.textContent = n;
+    }
+  }, 700);
+}
+
+function startGame(){
+  state = createGameState();
+  document.getElementById('bestScoreNum').textContent = loadBest();
+  document.getElementById('overOverlay').hidden = true;
+  updateHud();
+  render(state);
+  showScreen('screenPlay');
+  lastTs = null;
+  if(rafId) cancelAnimationFrame(rafId);
+  startCountdown(function(){
+    rafId = requestAnimationFrame(loop);
+  });
+}
+
+function onGameOver(){
+  playGameOver();
+  var best = loadBest();
+  var finalScore = Math.floor(state.score);
+  var isNewBest = finalScore > best;
+  if(isNewBest) saveBest(finalScore);
+  document.getElementById('overScoreText').innerHTML =
+    'スコア: <b>' + finalScore + '</b><br>' +
+    (isNewBest ? '🎉 さいこうきろく こうしん！' : 'さいこうきろく: ' + Math.max(best,finalScore));
+  document.getElementById('overOverlay').hidden = false;
+}
+
+function onLeft(){ if(state && !state.over && !countingDown){ moveLeft(state); playMove(); } }
+function onRight(){ if(state && !state.over && !countingDown){ moveRight(state); playMove(); } }
+
+function init(){
+  document.getElementById('bestScoreNum').textContent = loadBest();
+  document.getElementById('btnStart').addEventListener('click', startGame);
+  document.getElementById('btnRetry').addEventListener('click', startGame);
+  document.getElementById('btnToTitleFromOver').addEventListener('click', function(){
+    if(rafId) cancelAnimationFrame(rafId);
+    document.getElementById('bestScoreNum').textContent = loadBest();
+    showScreen('screenTitle');
+  });
+  document.getElementById('btnLeft').addEventListener('click', onLeft);
+  document.getElementById('btnRight').addEventListener('click', onRight);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft') onLeft();
+    if(e.key === 'ArrowRight') onRight();
+  });
+  showScreen('screenTitle');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
