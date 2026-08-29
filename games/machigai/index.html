@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>まちがいさがし</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; min-height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background: linear-gradient(160deg, #fff0e1 0%, #ffe1f0 45%, #e6e0ff 100%);
+    background-attachment: fixed;
+    color:#3a3060;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  h1,h2 { margin:0; }
+  .screen { display:none; min-height:100vh; }
+  .app { max-width: 760px; margin:0 auto; padding: 14px 12px 30px; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px; }
+  h1.title { font-size:19px; color:#c2456b; text-shadow:0 1px 0 #fff; }
+  .icon-btn {
+    width:44px; height:44px; border-radius:50%; border:none; background:#fff;
+    box-shadow:0 3px 8px rgba(0,0,0,0.18); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:active { transform:scale(0.9); }
+
+  #screenTitle .app { display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:48px; }
+  .titleLogo { font-size:50px; }
+  .titleMain { font-size:23px; font-weight:800; color:#c2456b; margin:6px 0 4px; }
+  .titleSub { color:#8a5a74; font-size:14px; margin-bottom:24px; }
+  .bigBtn {
+    background: linear-gradient(180deg,#ff9fc0,#e0538a); border:none; color:#fff;
+    font-weight:800; font-size:17px; padding:15px 30px; border-radius:18px;
+    box-shadow:0 6px 0 #b8386a; margin:6px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #b8386a; }
+
+  .tierBlock { margin-top: 16px; text-align:left; }
+  .tierHead { font-weight:800; color:#c2456b; font-size:14px; margin: 0 4px 8px; }
+  .puzzleGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:10px; }
+  .puzzleCard {
+    background:#fff; border-radius:16px; padding:12px 4px; text-align:center;
+    box-shadow:0 6px 14px rgba(190,60,110,0.18); position:relative;
+  }
+  .puzzleCard:active { transform:scale(0.95); }
+  .puzzleName { font-size:12px; font-weight:800; color:#c2456b; }
+  .doneBadge {
+    position:absolute; top:4px; right:4px; background:#4caf50; color:#fff;
+    border-radius:50%; width:20px; height:20px; font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .playHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .playTitle { font-size:16px; font-weight:800; color:#c2456b; }
+  .foundBadge { background:#fff; border-radius:12px; padding:5px 12px; font-weight:800; font-size:13px; color:#c2456b; box-shadow:0 3px 8px rgba(0,0,0,0.12); }
+  .stageCard {
+    background:#fffdf9; border-radius:22px; box-shadow:0 12px 28px rgba(0,0,0,0.16);
+    padding:8px; position:relative; overflow:hidden; max-width:700px; margin:0 auto;
+  }
+  #puzzleSvg { width:100%; height:auto; display:block; touch-action:manipulation; }
+  .hotspotMark { pointer-events:none; }
+
+  .celebrate-overlay {
+    position:absolute; inset:0; background: rgba(255,255,255,0.94);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index:20; border-radius:20px; padding:20px;
+    animation: fadeIn .35s ease;
+  }
+  .celebrate-overlay[hidden] { display:none; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .celebrate-emoji { font-size:56px; animation: bounce .6s ease infinite alternate; }
+  @keyframes bounce { from{ transform:translateY(0);} to{ transform:translateY(-14px);} }
+  .celebrate-text { font-size:22px; color:#c2456b; font-weight:800; margin-top:6px; }
+  .celebrate-sub { font-size:13px; color:#8a5a74; margin-top:6px; }
+  .confetti-piece { position:absolute; top:-16px; width:10px; height:16px; opacity:0.95; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ===== Title ===== -->
+<div id="screenTitle" class="screen">
+  <div class="app">
+    <div class="titleLogo">🔍✨</div>
+    <div class="titleMain">まちがいさがし</div>
+    <div class="titleSub">2まいの えを くらべて、ちがうところを みつけよう！</div>
+    <button class="bigBtn" id="btnStart">▶ はじめる</button>
+  </div>
+</div>
+
+<!-- ===== Select ===== -->
+<div id="screenSelect" class="screen">
+  <div class="app">
+    <header>
+      <button class="icon-btn" id="btnSelectBack">🏠</button>
+      <h1 class="title">パズルをえらんでね</h1>
+      <div style="width:44px;"></div>
+    </header>
+    <div id="tierBlocks"></div>
+  </div>
+</div>
+
+<!-- ===== Play ===== -->
+<div id="screenPlay" class="screen">
+  <div class="app">
+    <div class="playHeader">
+      <button class="icon-btn" id="btnPlayBack">◀</button>
+      <div class="playTitle" id="playTitle"></div>
+      <div class="foundBadge" id="foundBadge"></div>
+    </div>
+    <div class="stageCard">
+      <svg id="puzzleSvg" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="300" height="300" id="bgLeft" rx="16"/>
+        <rect x="340" y="0" width="300" height="300" id="bgRight" rx="16"/>
+        <g id="leftLayer"></g>
+        <g id="rightLayer"></g>
+        <g id="markLayer"></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="celebrate-overlay" id="celebrateOverlay" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== まちがいさがし: データ+エンジン ===================== */
+
+var PANEL_OFFSET = 340;
+var TOLERANCE = { easy: 30, normal: 24, hard: 18 };
+
+function propSvg(type, cx, cy, scale, color){
+  scale = scale || 1;
+  var s = scale;
+  switch(type){
+    case 'sun': return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(18*s)+'" fill="'+color+'"/>';
+    case 'cloud': return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(26*s)+'" ry="'+(14*s)+'" fill="'+color+'"/>';
+    case 'moon': return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(16*s)+'" fill="'+color+'"/>';
+    case 'star': return '<polygon points="'+starPoints(cx,cy,16*s,7*s)+'" fill="'+color+'"/>';
+    case 'tree': return '<g>' +
+        '<rect x="'+(cx-4*s)+'" y="'+cy+'" width="'+(8*s)+'" height="'+(22*s)+'" fill="#8d6e63"/>' +
+        '<circle cx="'+cx+'" cy="'+(cy-10*s)+'" r="'+(22*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'balloon': return '<g>' +
+        '<line x1="'+cx+'" y1="'+(cy+15*s)+'" x2="'+cx+'" y2="'+(cy+36*s)+'" stroke="#888" stroke-width="1.5"/>' +
+        '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(13*s)+'" ry="'+(16*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'flower': {
+      var petals = '';
+      for(var i=0;i<5;i++){
+        var ang = i*72;
+        petals += '<ellipse cx="'+cx+'" cy="'+(cy-9*s)+'" rx="'+(6*s)+'" ry="'+(9*s)+'" fill="'+color+'" transform="rotate('+ang+' '+cx+' '+cy+')"/>';
+      }
+      return '<g>'+petals+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(5*s)+'" fill="#ffd54f"/></g>';
+    }
+    case 'heart': {
+      var d = 'M '+cx+' '+(cy+12*s)+' C '+(cx-24*s)+' '+(cy-10*s)+', '+(cx-8*s)+' '+(cy-24*s)+', '+cx+' '+(cy-8*s)+
+              ' C '+(cx+8*s)+' '+(cy-24*s)+', '+(cx+24*s)+' '+(cy-10*s)+', '+cx+' '+(cy+12*s)+' Z';
+      return '<path d="'+d+'" fill="'+color+'"/>';
+    }
+    case 'house': return '<g>' +
+        '<rect x="'+(cx-16*s)+'" y="'+cy+'" width="'+(32*s)+'" height="'+(22*s)+'" fill="'+color+'"/>' +
+        '<polygon points="'+(cx-20*s)+','+cy+' '+cx+','+(cy-18*s)+' '+(cx+20*s)+','+cy+'" fill="#8d6e63"/>' +
+      '</g>';
+    case 'bird': return '<path d="M '+(cx-14*s)+' '+cy+' Q '+(cx-4*s)+' '+(cy-10*s)+' '+cx+' '+cy+' Q '+(cx+4*s)+' '+(cy-10*s)+' '+(cx+14*s)+' '+cy+'" fill="none" stroke="'+color+'" stroke-width="'+(3*s)+'" stroke-linecap="round"/>';
+    case 'book': return '<g>' +
+        '<rect x="'+(cx-16*s)+'" y="'+(cy-12*s)+'" width="'+(32*s)+'" height="'+(24*s)+'" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+(cy-12*s)+'" x2="'+cx+'" y2="'+(cy+12*s)+'" stroke="#fff" stroke-width="2"/>' +
+      '</g>';
+    case 'gift': return '<g>' +
+        '<rect x="'+(cx-15*s)+'" y="'+(cy-12*s)+'" width="'+(30*s)+'" height="'+(24*s)+'" fill="'+color+'"/>' +
+        '<rect x="'+(cx-3*s)+'" y="'+(cy-12*s)+'" width="'+(6*s)+'" height="'+(24*s)+'" fill="#fff"/>' +
+        '<rect x="'+(cx-15*s)+'" y="'+(cy-3*s)+'" width="'+(30*s)+'" height="'+(6*s)+'" fill="#fff"/>' +
+      '</g>';
+    case 'fish': return '<g>' +
+        '<polygon points="'+(cx-18*s)+','+cy+' '+(cx+10*s)+','+(cy-14*s)+' '+(cx+10*s)+','+(cy+14*s)+'" fill="'+color+'"/>' +
+        '<polygon points="'+(cx+10*s)+','+cy+' '+(cx+26*s)+','+(cy-10*s)+' '+(cx+26*s)+','+(cy+10*s)+'" fill="'+color+'"/>' +
+      '</g>';
+    case 'umbrella': return '<g>' +
+        '<path d="M '+(cx-20*s)+' '+cy+' Q '+cx+' '+(cy-28*s)+' '+(cx+20*s)+' '+cy+' Z" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+cy+'" x2="'+cx+'" y2="'+(cy+24*s)+'" stroke="#5d4037" stroke-width="2"/>' +
+      '</g>';
+    case 'kite': return '<g>' +
+        '<polygon points="'+cx+','+(cy-20*s)+' '+(cx+14*s)+','+cy+' '+cx+','+(cy+20*s)+' '+(cx-14*s)+','+cy+'" fill="'+color+'"/>' +
+        '<line x1="'+cx+'" y1="'+(cy+20*s)+'" x2="'+cx+'" y2="'+(cy+34*s)+'" stroke="#888" stroke-width="1.5"/>' +
+      '</g>';
+    case 'leaf': return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(10*s)+'" ry="'+(18*s)+'" fill="'+color+'" transform="rotate(30 '+cx+' '+cy+')"/>';
+    case 'butterfly': return '<g>' +
+        '<ellipse cx="'+(cx-10*s)+'" cy="'+(cy-6*s)+'" rx="'+(11*s)+'" ry="'+(8*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx+10*s)+'" cy="'+(cy-6*s)+'" rx="'+(11*s)+'" ry="'+(8*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx-9*s)+'" cy="'+(cy+7*s)+'" rx="'+(8*s)+'" ry="'+(6*s)+'" fill="'+color+'"/>' +
+        '<ellipse cx="'+(cx+9*s)+'" cy="'+(cy+7*s)+'" rx="'+(8*s)+'" ry="'+(6*s)+'" fill="'+color+'"/>' +
+        '<rect x="'+(cx-1.5*s)+'" y="'+(cy-10*s)+'" width="'+(3*s)+'" height="'+(20*s)+'" fill="#5d4037"/>' +
+      '</g>';
+    case 'note': return '<g>' +
+        '<circle cx="'+cx+'" cy="'+(cy+10*s)+'" r="'+(6*s)+'" fill="'+color+'"/>' +
+        '<line x1="'+(cx+6*s)+'" y1="'+(cy+10*s)+'" x2="'+(cx+6*s)+'" y2="'+(cy-16*s)+'" stroke="'+color+'" stroke-width="'+(2.5*s)+'"/>' +
+      '</g>';
+    case 'cupcake': return '<g>' +
+        '<polygon points="'+(cx-14*s)+','+(cy+16*s)+' '+(cx+14*s)+','+(cy+16*s)+' '+(cx+9*s)+','+(cy-2*s)+' '+(cx-9*s)+','+(cy-2*s)+'" fill="'+color+'"/>' +
+        '<circle cx="'+cx+'" cy="'+(cy-10*s)+'" r="'+(11*s)+'" fill="#fff59d"/>' +
+      '</g>';
+    default: return '';
+  }
+}
+function starPoints(cx, cy, rOuter, rInner){
+  var pts = [];
+  for(var i=0;i<10;i++){
+    var r = (i%2===0) ? rOuter : rInner;
+    var ang = (Math.PI/5)*i - Math.PI/2;
+    pts.push((cx+r*Math.cos(ang)).toFixed(1) + ',' + (cy+r*Math.sin(ang)).toFixed(1));
+  }
+  return pts.join(' ');
+}
+function characterSvg(type, cx, cy, scale, hairColor, outfitColor){
+  scale = scale || 1;
+  var s = scale;
+  var body = '<path d="M '+(cx-24*s)+' '+(cy+40*s)+' L '+(cx+24*s)+' '+(cy+40*s)+' L '+(cx+16*s)+' '+(cy-6*s)+' L '+(cx-16*s)+' '+(cy-6*s)+' Z" fill="'+outfitColor+'"/>';
+  var hair = '<ellipse cx="'+cx+'" cy="'+(cy-42*s)+'" rx="'+(26*s)+'" ry="'+(20*s)+'" fill="'+hairColor+'"/>';
+  var head = '<circle cx="'+cx+'" cy="'+(cy-30*s)+'" r="'+(22*s)+'" fill="#ffe0c2"/>';
+  var eyes = '<circle cx="'+(cx-8*s)+'" cy="'+(cy-28*s)+'" r="'+(3*s)+'" fill="#333"/>' +
+             '<circle cx="'+(cx+8*s)+'" cy="'+(cy-28*s)+'" r="'+(3*s)+'" fill="#333"/>';
+  var extra = '';
+  if(type==='cat'){
+    extra = '<polygon points="'+(cx-24*s)+','+(cy-50*s)+' '+(cx-10*s)+','+(cy-70*s)+' '+(cx-4*s)+','+(cy-48*s)+'" fill="'+hairColor+'"/>' +
+            '<polygon points="'+(cx+24*s)+','+(cy-50*s)+' '+(cx+10*s)+','+(cy-70*s)+' '+(cx+4*s)+','+(cy-48*s)+'" fill="'+hairColor+'"/>';
+  } else if(type==='robot'){
+    extra = '<rect x="'+(cx-3*s)+'" y="'+(cy-66*s)+'" width="'+(6*s)+'" height="'+(14*s)+'" fill="#999"/>' +
+            '<circle cx="'+cx+'" cy="'+(cy-70*s)+'" r="'+(5*s)+'" fill="#ff6f6f"/>';
+  }
+  return '<g>' + body + hair + head + eyes + extra + '</g>';
+}
+function findPropIdx(props, id){
+  for(var i=0;i<props.length;i++){ if(props[i].id===id) return i; }
+  return -1;
+}
+function applyDiffs(baseProps, diffs){
+  var right = baseProps.map(function(p){
+    return { id:p.id, type:p.type, x:p.x, y:p.y, scale:p.scale||1, color:p.color };
+  });
+  var hotspots = [];
+  diffs.forEach(function(d){
+    if(d.kind==='add'){
+      right.push({ id:d.shape.id, type:d.shape.type, x:d.shape.x, y:d.shape.y, scale:d.shape.scale||1, color:d.shape.color });
+      hotspots.push({x:d.shape.x, y:d.shape.y, found:false});
+      return;
+    }
+    var idx = findPropIdx(right, d.prop);
+    if(idx<0) return;
+    var p = right[idx];
+    if(d.kind==='remove'){
+      hotspots.push({x:p.x, y:p.y, found:false});
+      right.splice(idx,1);
+    } else if(d.kind==='color'){
+      hotspots.push({x:p.x, y:p.y, found:false});
+      p.color = d.to;
+    } else if(d.kind==='move'){
+      hotspots.push({x:p.x+d.dx, y:p.y+d.dy, found:false});
+      p.x += d.dx; p.y += d.dy;
+    } else if(d.kind==='resize'){
+      hotspots.push({x:p.x, y:p.y, found:false});
+      p.scale = (p.scale||1) * d.scale;
+    }
+  });
+  return { rightProps: right, hotspots: hotspots };
+}
+function hitTest(hotspots, tapX, tapY, isRightPanel, tolerance){
+  var localX = isRightPanel ? (tapX - PANEL_OFFSET) : tapX;
+  for(var i=0;i<hotspots.length;i++){
+    var h = hotspots[i];
+    if(h.found) continue;
+    var dx = localX - h.x, dy = tapY - h.y;
+    if(Math.sqrt(dx*dx+dy*dy) <= tolerance){ h.found = true; return i; }
+  }
+  return -1;
+}
+function allFound(hotspots){ return hotspots.every(function(h){ return h.found; }); }
+
+/* ---------- パズルデータ (18問) ---------- */
+var PUZZLES = [
+{id:1, title:'こうえんで', tier:'easy', bg:'#cdeeff', character:{type:'girl',x:150,y:230,hair:'#8b5a2b',outfit:'#ff8fc7'},
+ props:[
+  {id:'sun',type:'sun',x:60,y:55,color:'#ffd54f'},
+  {id:'cloud',type:'cloud',x:220,y:65,color:'#ffffff'},
+  {id:'tree',type:'tree',x:245,y:215,color:'#66bb6a'},
+  {id:'balloon',type:'balloon',x:65,y:150,color:'#ef5350'},
+  {id:'flower',type:'flower',x:220,y:265,color:'#f06292'}
+ ],
+ diffs:[{kind:'color',prop:'sun',to:'#ff8a65'},{kind:'remove',prop:'cloud'},{kind:'move',prop:'balloon',dx:-20,dy:20},{kind:'resize',prop:'flower',scale:1.5}]
+},
+{id:2, title:'よぞらのした', tier:'easy', bg:'#2d2b55', character:{type:'cat',x:150,y:230,hair:'#5c4a8a',outfit:'#7e57c2'},
+ props:[
+  {id:'moon',type:'moon',x:240,y:55,color:'#fff59d'},
+  {id:'star1',type:'star',x:60,y:50,color:'#ffffff'},
+  {id:'star2',type:'star',x:100,y:85,scale:0.8,color:'#ffffff'},
+  {id:'kite',type:'kite',x:190,y:150,color:'#ff8a65'},
+  {id:'gift',type:'gift',x:70,y:250,color:'#4fc3f7'}
+ ],
+ diffs:[{kind:'color',prop:'moon',to:'#ffd54f'},{kind:'remove',prop:'star2'},{kind:'move',prop:'kite',dx:25,dy:-15},{kind:'resize',prop:'gift',scale:1.3}]
+},
+{id:3, title:'おうちのなかで', tier:'easy', bg:'#ffe0f0', character:{type:'robot',x:150,y:230,hair:'#90a4ae',outfit:'#4fc3f7'},
+ props:[
+  {id:'book',type:'book',x:70,y:220,color:'#8d6e63'},
+  {id:'gift',type:'gift',x:200,y:230,color:'#ef5350'},
+  {id:'heart',type:'heart',x:230,y:150,color:'#f06292'},
+  {id:'note',type:'note',x:60,y:140,color:'#7e57c2'}
+ ],
+ diffs:[{kind:'color',prop:'gift',to:'#4fc3f7'},{kind:'remove',prop:'note'},{kind:'move',prop:'heart',dx:-20,dy:15},{kind:'resize',prop:'book',scale:1.4}]
+},
+{id:4, title:'はなばたけ', tier:'easy', bg:'#d9f7e6', character:{type:'girl',x:150,y:230,hair:'#e0a35c',outfit:'#ba68c8'},
+ props:[
+  {id:'f1',type:'flower',x:70,y:240,color:'#f06292'},
+  {id:'f2',type:'flower',x:150,y:255,color:'#ba68c8'},
+  {id:'f3',type:'flower',x:230,y:240,color:'#ffd54f'},
+  {id:'bfly',type:'butterfly',x:180,y:140,color:'#ba68c8'},
+  {id:'sun',type:'sun',x:50,y:50,color:'#ffd54f'}
+ ],
+ diffs:[{kind:'color',prop:'f1',to:'#4fc3f7'},{kind:'remove',prop:'bfly'},{kind:'move',prop:'f3',dx:20,dy:-10},{kind:'resize',prop:'sun',scale:0.7}]
+},
+{id:5, title:'うみべで', tier:'easy', bg:'#b3e5fc', character:{type:'cat',x:150,y:230,hair:'#455a64',outfit:'#26a69a'},
+ props:[
+  {id:'umb',type:'umbrella',x:80,y:180,color:'#ef5350'},
+  {id:'fish',type:'fish',x:220,y:230,color:'#4fc3f7'},
+  {id:'sun',type:'sun',x:230,y:55,color:'#ffd54f'},
+  {id:'cloud',type:'cloud',x:70,y:60,color:'#ffffff'}
+ ],
+ diffs:[{kind:'color',prop:'umb',to:'#66bb6a'},{kind:'remove',prop:'cloud'},{kind:'move',prop:'fish',dx:-15,dy:15},{kind:'resize',prop:'sun',scale:1.3}]
+},
+{id:6, title:'よるのおへや', tier:'easy', bg:'#e6e0ff', character:{type:'robot',x:150,y:230,hair:'#78909c',outfit:'#ba68c8'},
+ props:[
+  {id:'moon',type:'moon',x:70,y:60,color:'#fff59d'},
+  {id:'star',type:'star',x:220,y:60,color:'#ffffff'},
+  {id:'note',type:'note',x:80,y:220,color:'#7e57c2'},
+  {id:'gift',type:'gift',x:210,y:230,color:'#ef5350'}
+ ],
+ diffs:[{kind:'color',prop:'star',to:'#ffd54f'},{kind:'remove',prop:'note'},{kind:'move',prop:'gift',dx:15,dy:-15},{kind:'resize',prop:'moon',scale:1.4}]
+},
+{id:7, title:'こうえんであそぼう', tier:'normal', bg:'#cdeeff', character:{type:'girl',x:150,y:230,hair:'#8b5a2b',outfit:'#ff8fc7'},
+ props:[
+  {id:'sun',type:'sun',x:50,y:55,color:'#ffd54f'},
+  {id:'cloud',type:'cloud',x:220,y:60,color:'#ffffff'},
+  {id:'tree',type:'tree',x:230,y:215,color:'#66bb6a'},
+  {id:'balloon',type:'balloon',x:70,y:140,color:'#ef5350'},
+  {id:'flower',type:'flower',x:200,y:260,color:'#f06292'},
+  {id:'bird',type:'bird',x:140,y:80,color:'#8d6e63'}
+ ],
+ diffs:[{kind:'color',prop:'sun',to:'#ff8a65'},{kind:'remove',prop:'bird'},{kind:'move',prop:'balloon',dx:20,dy:20},{kind:'resize',prop:'tree',scale:0.7},{kind:'color',prop:'flower',to:'#4fc3f7'}]
+},
+{id:8, title:'ほしぞらキャンプ', tier:'normal', bg:'#2d2b55', character:{type:'cat',x:150,y:230,hair:'#5c4a8a',outfit:'#7e57c2'},
+ props:[
+  {id:'moon',type:'moon',x:60,y:55,color:'#fff59d'},
+  {id:'star1',type:'star',x:230,y:50,color:'#ffffff'},
+  {id:'star2',type:'star',x:190,y:90,scale:0.8,color:'#ffffff'},
+  {id:'tree',type:'tree',x:70,y:220,color:'#4a6741'},
+  {id:'gift',type:'gift',x:220,y:240,color:'#ef5350'},
+  {id:'kite',type:'kite',x:150,y:60,color:'#ba68c8'}
+ ],
+ diffs:[{kind:'remove',prop:'kite'},{kind:'color',prop:'gift',to:'#4fc3f7'},{kind:'move',prop:'star1',dx:-20,dy:20},{kind:'resize',prop:'moon',scale:1.3},{kind:'color',prop:'tree',to:'#26734d'}]
+},
+{id:9, title:'おへやでどくしょ', tier:'normal', bg:'#ffe0f0', character:{type:'robot',x:150,y:230,hair:'#90a4ae',outfit:'#4fc3f7'},
+ props:[
+  {id:'book',type:'book',x:70,y:210,color:'#8d6e63'},
+  {id:'heart',type:'heart',x:220,y:150,color:'#f06292'},
+  {id:'gift',type:'gift',x:210,y:240,color:'#4fc3f7'},
+  {id:'note',type:'note',x:60,y:130,color:'#7e57c2'},
+  {id:'cup',type:'cupcake',x:150,y:240,color:'#ffca28'}
+ ],
+ diffs:[{kind:'color',prop:'book',to:'#5d4037'},{kind:'remove',prop:'note'},{kind:'move',prop:'gift',dx:-15,dy:10},{kind:'resize',prop:'cup',scale:1.3},{kind:'color',prop:'heart',to:'#ba68c8'}]
+},
+{id:10, title:'ちょうちょのはたけ', tier:'normal', bg:'#d9f7e6', character:{type:'girl',x:150,y:230,hair:'#e0a35c',outfit:'#ba68c8'},
+ props:[
+  {id:'f1',type:'flower',x:60,y:245,color:'#f06292'},
+  {id:'f2',type:'flower',x:150,y:255,color:'#ba68c8'},
+  {id:'f3',type:'flower',x:230,y:240,color:'#ffd54f'},
+  {id:'b1',type:'butterfly',x:120,y:150,color:'#ba68c8'},
+  {id:'b2',type:'butterfly',x:200,y:120,scale:0.8,color:'#4fc3f7'},
+  {id:'sun',type:'sun',x:50,y:50,color:'#ffd54f'}
+ ],
+ diffs:[{kind:'remove',prop:'b2'},{kind:'color',prop:'f1',to:'#4fc3f7'},{kind:'move',prop:'f3',dx:15,dy:-15},{kind:'resize',prop:'sun',scale:0.7},{kind:'color',prop:'b1',to:'#ef5350'}]
+},
+{id:11, title:'なつのうみ', tier:'normal', bg:'#b3e5fc', character:{type:'cat',x:150,y:230,hair:'#455a64',outfit:'#26a69a'},
+ props:[
+  {id:'umb',type:'umbrella',x:80,y:180,color:'#ef5350'},
+  {id:'fish1',type:'fish',x:220,y:230,color:'#4fc3f7'},
+  {id:'fish2',type:'fish',x:240,y:262,scale:0.7,color:'#26a69a'},
+  {id:'sun',type:'sun',x:230,y:55,color:'#ffd54f'},
+  {id:'cloud',type:'cloud',x:70,y:60,color:'#ffffff'}
+ ],
+ diffs:[{kind:'remove',prop:'fish2'},{kind:'color',prop:'umb',to:'#66bb6a'},{kind:'move',prop:'fish1',dx:-15,dy:15},{kind:'resize',prop:'sun',scale:1.3},{kind:'color',prop:'cloud',to:'#b3e5fc'}]
+},
+{id:12, title:'ゆめのなかで', tier:'normal', bg:'#e6e0ff', character:{type:'robot',x:150,y:230,hair:'#78909c',outfit:'#ba68c8'},
+ props:[
+  {id:'moon',type:'moon',x:70,y:60,color:'#fff59d'},
+  {id:'star1',type:'star',x:220,y:60,color:'#ffffff'},
+  {id:'star2',type:'star',x:180,y:100,scale:0.7,color:'#ffffff'},
+  {id:'note',type:'note',x:80,y:220,color:'#7e57c2'},
+  {id:'gift',type:'gift',x:210,y:230,color:'#ef5350'}
+ ],
+ diffs:[{kind:'remove',prop:'star2'},{kind:'color',prop:'gift',to:'#4fc3f7'},{kind:'move',prop:'note',dx:15,dy:-10},{kind:'resize',prop:'moon',scale:1.4},{kind:'color',prop:'star1',to:'#ffd54f'}]
+},
+{id:13, title:'おまつりのよる', tier:'hard', bg:'#2d2b55', character:{type:'girl',x:150,y:230,hair:'#8b5a2b',outfit:'#ff8fc7'},
+ props:[
+  {id:'moon',type:'moon',x:60,y:55,color:'#fff59d'},
+  {id:'star',type:'star',x:230,y:50,color:'#ffffff'},
+  {id:'lant',type:'gift',x:220,y:90,color:'#ef5350'},
+  {id:'tree',type:'tree',x:70,y:220,color:'#4a6741'},
+  {id:'flower',type:'flower',x:200,y:250,color:'#f06292'},
+  {id:'balloon',type:'balloon',x:150,y:130,color:'#ba68c8'},
+  {id:'kite',type:'kite',x:100,y:80,color:'#ffd54f'}
+ ],
+ diffs:[{kind:'remove',prop:'kite'},{kind:'color',prop:'balloon',to:'#ef5350'},{kind:'move',prop:'flower',dx:-20,dy:10},{kind:'resize',prop:'tree',scale:0.8},{kind:'color',prop:'moon',to:'#ffd54f'},{kind:'move',prop:'lant',dx:15,dy:15}]
+},
+{id:14, title:'くだものばたけ', tier:'hard', bg:'#cdeeff', character:{type:'cat',x:150,y:230,hair:'#455a64',outfit:'#26a69a'},
+ props:[
+  {id:'t1',type:'tree',x:80,y:210,color:'#66bb6a'},
+  {id:'t2',type:'tree',x:220,y:215,scale:0.9,color:'#81c784'},
+  {id:'sun',type:'sun',x:150,y:50,color:'#ffd54f'},
+  {id:'cloud',type:'cloud',x:60,y:70,color:'#ffffff'},
+  {id:'flower',type:'flower',x:150,y:260,color:'#f06292'},
+  {id:'bird',type:'bird',x:190,y:90,color:'#8d6e63'}
+ ],
+ diffs:[{kind:'remove',prop:'bird'},{kind:'color',prop:'t1',to:'#43a047'},{kind:'move',prop:'cloud',dx:30,dy:10},{kind:'resize',prop:'flower',scale:1.4},{kind:'color',prop:'sun',to:'#ffb74d'},{kind:'move',prop:'t2',dx:-15,dy:0}]
+},
+{id:15, title:'うちゅうたんけん', tier:'hard', bg:'#2d2b55', character:{type:'robot',x:150,y:230,hair:'#78909c',outfit:'#ba68c8'},
+ props:[
+  {id:'moon',type:'moon',x:70,y:55,color:'#fff59d'},
+  {id:'star1',type:'star',x:230,y:50,color:'#ffffff'},
+  {id:'star2',type:'star',x:190,y:90,scale:0.7,color:'#ffffff'},
+  {id:'star3',type:'star',x:130,y:60,scale:0.6,color:'#ffffff'},
+  {id:'kite',type:'kite',x:150,y:150,color:'#4fc3f7'},
+  {id:'gift',type:'gift',x:220,y:230,color:'#ef5350'}
+ ],
+ diffs:[{kind:'remove',prop:'star3'},{kind:'color',prop:'kite',to:'#ba68c8'},{kind:'move',prop:'star1',dx:20,dy:15},{kind:'resize',prop:'moon',scale:1.3},{kind:'color',prop:'gift',to:'#66bb6a'},{kind:'move',prop:'star2',dx:-15,dy:10}]
+},
+{id:16, title:'ようせいのにわ', tier:'hard', bg:'#d9f7e6', character:{type:'girl',x:150,y:230,hair:'#e0a35c',outfit:'#ba68c8'},
+ props:[
+  {id:'f1',type:'flower',x:60,y:240,color:'#f06292'},
+  {id:'f2',type:'flower',x:150,y:255,color:'#ba68c8'},
+  {id:'f3',type:'flower',x:230,y:240,color:'#ffd54f'},
+  {id:'bfly',type:'butterfly',x:120,y:150,color:'#ba68c8'},
+  {id:'heart',type:'heart',x:200,y:120,color:'#f06292'},
+  {id:'leaf',type:'leaf',x:80,y:180,color:'#66bb6a'}
+ ],
+ diffs:[{kind:'remove',prop:'leaf'},{kind:'color',prop:'f2',to:'#4fc3f7'},{kind:'move',prop:'bfly',dx:20,dy:-10},{kind:'resize',prop:'f3',scale:1.5},{kind:'color',prop:'heart',to:'#ba68c8'},{kind:'move',prop:'f1',dx:-15,dy:10}]
+},
+{id:17, title:'かいていたんけん', tier:'hard', bg:'#b3e0f7', character:{type:'cat',x:150,y:230,hair:'#455a64',outfit:'#0288d1'},
+ props:[
+  {id:'fish1',type:'fish',x:80,y:200,color:'#4fc3f7'},
+  {id:'fish2',type:'fish',x:200,y:230,scale:0.8,color:'#26a69a'},
+  {id:'fish3',type:'fish',x:150,y:150,scale:0.7,color:'#0288d1'},
+  {id:'umb',type:'umbrella',x:60,y:100,color:'#ef5350'},
+  {id:'star',type:'star',x:230,y:80,color:'#ffd54f'},
+  {id:'leaf',type:'leaf',x:220,y:200,color:'#66bb6a'}
+ ],
+ diffs:[{kind:'remove',prop:'fish3'},{kind:'color',prop:'fish1',to:'#7e57c2'},{kind:'move',prop:'umb',dx:15,dy:15},{kind:'resize',prop:'star',scale:1.4},{kind:'color',prop:'leaf',to:'#26a69a'},{kind:'move',prop:'fish2',dx:-20,dy:-10}]
+},
+{id:18, title:'おかしのくに', tier:'hard', bg:'#ffe0f0', character:{type:'robot',x:150,y:230,hair:'#90a4ae',outfit:'#f06292'},
+ props:[
+  {id:'c1',type:'cupcake',x:70,y:220,color:'#ffca28'},
+  {id:'c2',type:'cupcake',x:150,y:240,scale:0.8,color:'#f06292'},
+  {id:'c3',type:'cupcake',x:230,y:220,scale:0.9,color:'#4fc3f7'},
+  {id:'gift',type:'gift',x:100,y:150,color:'#ef5350'},
+  {id:'heart',type:'heart',x:200,y:120,color:'#ba68c8'},
+  {id:'star',type:'star',x:150,y:60,color:'#ffd54f'}
+ ],
+ diffs:[{kind:'remove',prop:'c2'},{kind:'color',prop:'gift',to:'#66bb6a'},{kind:'move',prop:'heart',dx:20,dy:10},{kind:'resize',prop:'c1',scale:1.3},{kind:'color',prop:'star',to:'#4fc3f7'},{kind:'move',prop:'c3',dx:-15,dy:15}]
+}
+];
+
+var TIER_LABEL = { easy:'かんたん', normal:'ふつう', hard:'むずかしい' };
+var TIER_ORDER = ['easy','normal','hard'];
+
+/* ===================== 進捗保存 ===================== */
+function loadCompleted(){
+  try{ return JSON.parse(localStorage.getItem('machigai_completed')||'[]'); }catch(e){ return []; }
+}
+function saveCompleted(arr){ try{ localStorage.setItem('machigai_completed', JSON.stringify(arr)); }catch(e){} }
+function markCompleted(id){
+  var arr = loadCompleted();
+  if(arr.indexOf(id)===-1){ arr.push(id); saveCompleted(arr); }
+}
+
+/* ===================== 音 ===================== */
+var audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function playTone(freq,dur,delay,type){
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.22,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playFound(){ playTone(750+Math.random()*150, 0.12); }
+function playWin(){ [523,659,784,1046].forEach(function(f,i){ playTone(f,0.28,i*0.15); }); }
+
+/* ===================== 画面/状態 ===================== */
+function showScreen(name){
+  ['screenTitle','screenSelect','screenPlay'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'block' : 'none';
+  });
+}
+
+var currentPuzzleIndex = 0;
+var currentHotspots = [];
+var currentTolerance = 24;
+
+function renderSelect(){
+  var completed = loadCompleted();
+  var el = document.getElementById('tierBlocks');
+  var html = '';
+  TIER_ORDER.forEach(function(tier){
+    var list = PUZZLES.filter(function(p){ return p.tier===tier; });
+    if(list.length===0) return;
+    html += '<div class="tierBlock"><div class="tierHead">' + TIER_LABEL[tier] + '</div><div class="puzzleGrid">';
+    list.forEach(function(p){
+      var idx = PUZZLES.indexOf(p);
+      var done = completed.indexOf(p.id) !== -1;
+      html += '<button class="puzzleCard" data-idx="'+idx+'">' +
+        (done ? '<div class="doneBadge">✓</div>' : '') +
+        '<div class="puzzleName">'+p.title+'</div>' +
+        '</button>';
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.puzzleCard').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      loadPuzzle(parseInt(btn.getAttribute('data-idx'),10));
+    });
+  });
+}
+
+function renderScene(layerId, props, character, isRight){
+  var offset = isRight ? PANEL_OFFSET : 0;
+  var html = '<g transform="translate('+offset+',0)">';
+  props.forEach(function(p){
+    html += propSvg(p.type, p.x, p.y, p.scale||1, p.color);
+  });
+  html += characterSvg(character.type, character.x, character.y, 1, character.hair, character.outfit);
+  html += '</g>';
+  document.getElementById(layerId).innerHTML = html;
+}
+
+function updateFoundBadge(){
+  var found = currentHotspots.filter(function(h){ return h.found; }).length;
+  document.getElementById('foundBadge').textContent = '⭐ ' + found + ' / ' + currentHotspots.length;
+}
+
+function drawMarks(){
+  var html = '';
+  currentHotspots.forEach(function(h){
+    if(!h.found) return;
+    [0, PANEL_OFFSET].forEach(function(off){
+      html += '<circle class="hotspotMark" cx="'+(h.x+off)+'" cy="'+h.y+'" r="16" fill="none" stroke="#ff5252" stroke-width="3" stroke-dasharray="4,3"/>';
+    });
+  });
+  document.getElementById('markLayer').innerHTML = html;
+}
+
+function onSvgPointerDown(e){
+  var svg = document.getElementById('puzzleSvg');
+  var rect = svg.getBoundingClientRect();
+  if(rect.width===0) return;
+  var scaleX = 680 / rect.width;
+  var scaleY = 300 / rect.height;
+  var localX = (e.clientX - rect.left) * scaleX;
+  var localY = (e.clientY - rect.top) * scaleY;
+  var isRight = localX >= PANEL_OFFSET;
+  var found = hitTest(currentHotspots, localX, localY, isRight, currentTolerance);
+  if(found >= 0){
+    playFound();
+    updateFoundBadge();
+    drawMarks();
+    if(allFound(currentHotspots)){
+      var puzzle = PUZZLES[currentPuzzleIndex];
+      markCompleted(puzzle.id);
+      playWin();
+      celebrate();
+    }
+  }
+}
+
+function loadPuzzle(idx){
+  currentPuzzleIndex = idx;
+  var puzzle = PUZZLES[idx];
+  currentTolerance = TOLERANCE[puzzle.tier] || 24;
+  document.getElementById('playTitle').textContent = puzzle.title;
+  document.getElementById('bgLeft').setAttribute('fill', puzzle.bg);
+  document.getElementById('bgRight').setAttribute('fill', puzzle.bg);
+
+  var result = applyDiffs(puzzle.props, puzzle.diffs);
+  currentHotspots = result.hotspots;
+
+  renderScene('leftLayer', puzzle.props, puzzle.character, false);
+  renderScene('rightLayer', result.rightProps, puzzle.character, true);
+  document.getElementById('markLayer').innerHTML = '';
+  updateFoundBadge();
+
+  var overlay = document.getElementById('celebrateOverlay');
+  overlay.hidden = true;
+  overlay.innerHTML = '';
+
+  showScreen('screenPlay');
+}
+
+var confettiColors = ['#ff9fc0','#ffd700','#70a1ff','#7bed9f','#ba68c8','#ffa502'];
+function celebrate(){
+  var overlay = document.getElementById('celebrateOverlay');
+  overlay.innerHTML =
+    '<div class="celebrate-emoji">🎉</div>' +
+    '<div class="celebrate-text">ぜんぶみつけたね!✨</div>' +
+    '<div class="celebrate-sub">すごい かんさつりょく!(タップでとじる)</div>';
+  for (var i=0; i<26; i++){
+    var piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+    var dur = 1.2 + Math.random()*1.3;
+    var delay = Math.random()*0.6;
+    piece.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+    overlay.appendChild(piece);
+  }
+  overlay.hidden = false;
+  overlay.addEventListener('click', function closeIt(){
+    overlay.hidden = true;
+    overlay.removeEventListener('click', closeIt);
+    renderSelect();
+    showScreen('screenSelect');
+  });
+}
+
+var styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(320px) rotate(360deg); opacity: 0.25; } }';
+document.head.appendChild(styleEl);
+
+function init(){
+  document.getElementById('btnStart').addEventListener('click', function(){
+    renderSelect();
+    showScreen('screenSelect');
+  });
+  document.getElementById('btnSelectBack').addEventListener('click', function(){ showScreen('screenTitle'); });
+  document.getElementById('btnPlayBack').addEventListener('click', function(){
+    renderSelect();
+    showScreen('screenSelect');
+  });
+  document.getElementById('puzzleSvg').addEventListener('pointerdown', onSvgPointerDown);
+  showScreen('screenTitle');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
