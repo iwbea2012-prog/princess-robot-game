@@ -261,8 +261,9 @@ function characterSvg(type, cx, cy, scale, hairColor, outfitColor){
 }
 
 /* ===================== おもいでアルバム: エンジン ===================== */
-var GRID_N = 3;
-var PAIRS_PER_ROUND = 4;
+var GRID_COLS = 5;
+var GRID_ROWS = 2;
+var PAIRS_PER_ROUND = 6;
 var ICON_POOL = ['sun','cloud','moon','star','tree','balloon','flower','heart',
   'house','bird','book','gift','fish','umbrella','kite','leaf','butterfly','note','cupcake'];
 var ICON_COLOR = {
@@ -310,7 +311,7 @@ function isRoundComplete(cards){ return cards.every(function(c){ return c.matche
 
 function newPictureState(){
   var arr = [];
-  for(var i=0;i<GRID_N*GRID_N;i++) arr.push(false);
+  for(var i=0;i<GRID_COLS*GRID_ROWS;i++) arr.push(false);
   return { revealed: arr };
 }
 function revealRandomTile(state){
@@ -385,7 +386,13 @@ function loadAllProgress(){
 function saveAllProgress(obj){ try{ localStorage.setItem('album_progress', JSON.stringify(obj)); }catch(e){} }
 function getPictureState(id){
   var all = loadAllProgress();
-  if(!all[id]){ all[id] = newPictureState(); saveAllProgress(all); }
+  var expected = GRID_COLS*GRID_ROWS;
+  var cur = all[id];
+  var needsReset = !cur || !Array.isArray(cur.revealed) || cur.revealed.length !== expected;
+  if(needsReset){
+    all[id] = newPictureState();
+    saveAllProgress(all);
+  }
   return all[id];
 }
 function savePictureState(id, state){
@@ -442,7 +449,7 @@ function renderPictureArt(layerId, picture){
 }
 
 function renderThumb(picture, state){
-  var tileSize = 300/GRID_N;
+  var tileW = 300/GRID_COLS, tileH = 300/GRID_ROWS;
   var html = '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">' +
     '<rect width="300" height="300" fill="'+picture.bg+'"/><g id="art_'+picture.id+'">';
   picture.props.forEach(function(p){ html += propSvg(p.type, p.x, p.y, p.scale||1, p.color); });
@@ -450,10 +457,10 @@ function renderThumb(picture, state){
     html += characterSvg(picture.character.type, picture.character.x, picture.character.y, 1, picture.character.hair, picture.character.outfit);
   }
   html += '</g>';
-  for(var i=0;i<GRID_N*GRID_N;i++){
+  for(var i=0;i<GRID_COLS*GRID_ROWS;i++){
     if(!state.revealed[i]){
-      var col = i % GRID_N, row = Math.floor(i/GRID_N);
-      html += '<rect x="'+(col*tileSize)+'" y="'+(row*tileSize)+'" width="'+tileSize+'" height="'+tileSize+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>';
+      var col = i % GRID_COLS, row = Math.floor(i/GRID_COLS);
+      html += '<rect x="'+(col*tileW)+'" y="'+(row*tileH)+'" width="'+tileW+'" height="'+tileH+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>';
     }
   }
   html += '</svg>';
@@ -469,7 +476,7 @@ function renderGallery(){
     html += '<button class="galleryCard" data-idx="'+idx+'">' +
       '<div class="galleryThumb">'+renderThumb(picture, state)+'</div>' +
       '<div class="galleryName">'+picture.title+'</div>' +
-      '<div class="galleryProgress">'+(done ? '<span class="doneTag">✅ かんせい!</span>' : revealedCount(state)+' / '+(GRID_N*GRID_N))+'</div>' +
+      '<div class="galleryProgress">'+(done ? '<span class="doneTag">✅ かんせい!</span>' : revealedCount(state)+' / '+(GRID_COLS*GRID_ROWS))+'</div>' +
       '</button>';
   });
   el.innerHTML = html;
@@ -493,13 +500,13 @@ function openPicture(idx){
 }
 
 function renderOverlay(state){
-  var tileSize = 300/GRID_N;
+  var tileW = 300/GRID_COLS, tileH = 300/GRID_ROWS;
   var html = '';
-  for(var i=0;i<GRID_N*GRID_N;i++){
+  for(var i=0;i<GRID_COLS*GRID_ROWS;i++){
     if(!state.revealed[i]){
-      var col = i % GRID_N, row = Math.floor(i/GRID_N);
-      html += '<rect class="tileOverlay" data-tile="'+i+'" x="'+(col*tileSize)+'" y="'+(row*tileSize)+'" width="'+tileSize+'" height="'+tileSize+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>' +
-        '<text x="'+(col*tileSize+tileSize/2)+'" y="'+(row*tileSize+tileSize/2+7)+'" font-size="26" text-anchor="middle" fill="#e0a35c" pointer-events="none">?</text>';
+      var col = i % GRID_COLS, row = Math.floor(i/GRID_COLS);
+      html += '<rect class="tileOverlay" data-tile="'+i+'" x="'+(col*tileW)+'" y="'+(row*tileH)+'" width="'+tileW+'" height="'+tileH+'" fill="#f4d9c6" stroke="#fff" stroke-width="3"/>' +
+        '<text x="'+(col*tileW+tileW/2)+'" y="'+(row*tileH+tileH/2+7)+'" font-size="26" text-anchor="middle" fill="#e0a35c" pointer-events="none">?</text>';
     }
   }
   document.getElementById('overlayLayer').innerHTML = html;
@@ -507,7 +514,7 @@ function renderOverlay(state){
 
 function updateProgressUI(state){
   var done = isPictureComplete(state);
-  document.getElementById('progressText').textContent = done ? '🎉 かんせい しました!' : (revealedCount(state) + ' / ' + (GRID_N*GRID_N) + ' ピース');
+  document.getElementById('progressText').textContent = done ? '🎉 かんせい しました!' : (revealedCount(state) + ' / ' + (GRID_COLS*GRID_ROWS) + ' ピース');
   var btn = document.getElementById('btnPlayMemory');
   btn.style.display = done ? 'none' : 'block';
 }
