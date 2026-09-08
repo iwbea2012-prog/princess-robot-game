@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>おえかきレッスン</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; min-height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background: linear-gradient(160deg, #fff4d6 0%, #ffe1e1 45%, #e1f0ff 100%);
+    background-attachment: fixed;
+    color:#4a3a2a;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  h1,h2 { margin:0; }
+  .screen { display:none; min-height:100vh; }
+  .app { max-width: 460px; margin:0 auto; padding: 14px 12px 30px; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px; }
+  h1.title { font-size:18px; color:#d2691e; text-shadow:0 1px 0 #fff; }
+  .icon-btn {
+    width:44px; height:44px; border-radius:50%; border:none; background:#fff;
+    box-shadow:0 3px 8px rgba(0,0,0,0.18); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:active { transform:scale(0.9); }
+
+  #screenTitle .app { display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:44px; }
+  .titleLogo { font-size:50px; }
+  .titleMain { font-size:22px; font-weight:800; color:#d2691e; margin:6px 0 4px; }
+  .titleSub { color:#8a6a4a; font-size:14px; margin-bottom:22px; }
+  .bigBtn {
+    background: linear-gradient(180deg,#ffb37a,#f0813f); border:none; color:#fff;
+    font-weight:800; font-size:17px; padding:15px 30px; border-radius:18px;
+    box-shadow:0 6px 0 #c05f24; margin:6px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #c05f24; }
+  .ghostBtn { background:#fff; border:2px solid #ffd0b0; color:#d2691e; font-weight:800; padding:9px 18px; border-radius:14px; margin:6px; }
+
+  /* ---------- select ---------- */
+  .catTabs { display:flex; gap:8px; justify-content:center; margin:4px 0 14px; flex-wrap:wrap; }
+  .catTab { background:#fff; border:2px solid #ffd7b0; color:#c2691e; font-weight:800; padding:8px 16px; border-radius:14px; font-size:13px; }
+  .catTab.active { background:#f0813f; color:#fff; border-color:#c05f24; }
+  .topicGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap:12px; }
+  .topicCard { background:#fff; border-radius:16px; padding:12px 4px; text-align:center; box-shadow:0 6px 14px rgba(200,120,60,0.16); position:relative; }
+  .topicCard:active { transform:scale(0.95); }
+  .topicEmoji { font-size:32px; }
+  .topicName { font-size:12px; font-weight:800; color:#8a5a34; margin-top:4px; }
+  .doneBadge { position:absolute; top:4px; right:4px; background:#4caf50; color:#fff; border-radius:50%; width:20px; height:20px; font-size:12px; display:flex; align-items:center; justify-content:center; }
+
+  /* ---------- draw ---------- */
+  .playHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .playTitle { font-size:16px; font-weight:800; color:#d2691e; }
+  .stepBadge { background:#fff; border-radius:12px; padding:4px 12px; font-weight:800; font-size:12px; color:#d2691e; box-shadow:0 3px 8px rgba(0,0,0,0.12); }
+  .instructionBox {
+    background:#fff8e8; border:2px solid #ffe0b0; border-radius:14px; padding:10px 14px;
+    font-size:14px; font-weight:800; color:#a05a1e; text-align:center; margin-bottom:8px;
+  }
+  .canvasWrap { position:relative; width:100%; max-width:340px; margin:0 auto; border-radius:18px; overflow:hidden; box-shadow:0 10px 26px rgba(0,0,0,0.18); background:#fffdf9; }
+  #guideSvg, #drawCanvas { position:absolute; top:0; left:0; width:100%; height:auto; display:block; }
+  #guideSvg { position:relative; z-index:1; pointer-events:none; }
+  #drawCanvas { z-index:2; touch-action:none; }
+
+  .paletteRow { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:12px 0 4px; }
+  .penSwatch { width:34px; height:34px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.25); }
+  .penSwatch.selected { border-color:#333; transform:scale(1.15); box-shadow:0 0 0 3px #ffd700; }
+
+  .toolRow { display:flex; justify-content:center; gap:10px; margin-top:8px; }
+  .toolBtn { background:#fff; border:2px solid #ffd7b0; color:#c2691e; font-weight:800; padding:8px 14px; border-radius:12px; font-size:13px; }
+
+  .navRow { display:flex; justify-content:space-between; gap:12px; margin-top:14px; max-width:340px; margin-left:auto; margin-right:auto; }
+  .navBtn { flex:1; padding:13px; border-radius:16px; border:none; font-weight:800; font-size:15px; background:#fff; color:#c2691e; box-shadow:0 4px 0 #ffd7b0; }
+  .navBtn:disabled { opacity:0.4; }
+  .navBtn.finish { background:linear-gradient(180deg,#8dffa0,#3fc35b); color:#fff; box-shadow:0 4px 0 #2a9450; }
+  .navBtn:active:not(:disabled) { transform:translateY(3px); box-shadow:none; }
+
+  .celebrate-overlay {
+    position:fixed; inset:0; background: rgba(255,255,255,0.94);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index:20; padding:20px;
+    animation: fadeIn .35s ease;
+  }
+  .celebrate-overlay[hidden] { display:none; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .celebrate-emoji { font-size:56px; animation: bounce .6s ease infinite alternate; }
+  @keyframes bounce { from{ transform:translateY(0);} to{ transform:translateY(-14px);} }
+  .celebrate-text { font-size:22px; color:#d2691e; font-weight:800; margin-top:6px; }
+  .celebrate-sub { font-size:13px; color:#8a6a4a; margin-top:6px; }
+  .confetti-piece { position:absolute; top:-16px; width:10px; height:16px; opacity:0.95; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ===== Title ===== -->
+<div id="screenTitle" class="screen">
+  <div class="app">
+    <div class="titleLogo">🖍️✨</div>
+    <div class="titleMain">おえかきレッスン</div>
+    <div class="titleSub">まる・さんかく・せんを くみあわせて、じょうずに かいてみよう！</div>
+    <button class="bigBtn" id="btnStart">▶ はじめる</button>
+  </div>
+</div>
+
+<!-- ===== Select ===== -->
+<div id="screenSelect" class="screen">
+  <div class="app">
+    <header>
+      <button class="icon-btn" id="btnSelectBack">🏠</button>
+      <h1 class="title">おだいをえらんでね</h1>
+      <div style="width:44px;"></div>
+    </header>
+    <div class="catTabs" id="catTabs"></div>
+    <div class="topicGrid" id="topicGrid"></div>
+  </div>
+</div>
+
+<!-- ===== Draw ===== -->
+<div id="screenDraw" class="screen">
+  <div class="app">
+    <div class="playHeader">
+      <button class="icon-btn" id="btnDrawBack">◀</button>
+      <div class="playTitle" id="drawTitle"></div>
+      <div class="stepBadge" id="stepBadge"></div>
+    </div>
+    <div class="instructionBox" id="instructionBox"></div>
+    <div class="canvasWrap">
+      <svg id="guideSvg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      <canvas id="drawCanvas" width="300" height="300"></canvas>
+    </div>
+    <div class="paletteRow" id="paletteRow"></div>
+    <div class="toolRow">
+      <button class="toolBtn" id="btnClear">🧽 けす</button>
+    </div>
+    <div class="navRow">
+      <button class="navBtn" id="btnPrevStep">◀ まえへ</button>
+      <button class="navBtn" id="btnNextStep">つぎへ ▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="celebrate-overlay" id="celebrateOverlay" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== 図形プリミティブ ===================== */
+function petalRing(pivotX, pivotY, count, dist, rx, ry){
+  var arr = [];
+  for(var i=0;i<count;i++){
+    var angle = (360/count)*i;
+    arr.push({type:'ellipse', cx:pivotX, cy:pivotY-dist, rx:rx, ry:ry, rot:angle, pivotX:pivotX, pivotY:pivotY});
+  }
+  return arr;
+}
+var CATEGORY_LABEL = { animal:'どうぶつ', nature:'おはな・しぜん' };
+
+/* ===================== おだいデータ (20問) ===================== */
+var TOPICS = [
+{ id:'cat', title:'ねこ', emoji:'🐱', category:'animal', steps:[
+  { text:'まるをかいて「かお」をつくろう', shapes:[
+    {type:'circle', cx:150, cy:140, r:55}
+  ]},
+  { text:'さんかくをふたつかいて「みみ」をつくろう', shapes:[
+    {type:'triangle', points:[[105,95],[120,50],[140,90]]},
+    {type:'triangle', points:[[195,95],[180,50],[160,90]]}
+  ]},
+  { text:'てんをふたつと、ちいさいさんかくで「め」と「はな」', shapes:[
+    {type:'dot', cx:130, cy:135, r:6},
+    {type:'dot', cx:170, cy:135, r:6},
+    {type:'triangle', points:[[142,150],[158,150],[150,162]]}
+  ]},
+  { text:'カーブで「くち」、線をのばして「ひげ」', shapes:[
+    {type:'curve', points:[[130,170],[150,182],[170,170]]},
+    {type:'line', points:[[110,155],[70,150]]},
+    {type:'line', points:[[110,162],[70,165]]},
+    {type:'line', points:[[190,155],[230,150]]},
+    {type:'line', points:[[190,162],[230,165]]}
+  ]},
+  { text:'たまごのようなかたちで「からだ」', shapes:[
+    {type:'ellipse', cx:150, cy:245, rx:60, ry:45}
+  ]},
+  { text:'カーブをかいて「しっぽ」', shapes:[
+    {type:'curve', points:[[205,255],[240,230],[225,190]]}
+  ]}
+]},
+{ id:'rabbit', title:'うさぎ', emoji:'🐰', category:'animal', steps:[
+  { text:'まるをかいて「かお」', shapes:[{type:'circle', cx:150, cy:160, r:50}]},
+  { text:'ながいだえんで「みみ」をふたつ', shapes:[
+    {type:'ellipse', cx:120, cy:80, rx:16, ry:55, rot:-10},
+    {type:'ellipse', cx:180, cy:80, rx:16, ry:55, rot:10}
+  ]},
+  { text:'てんで「め」と「はな」', shapes:[
+    {type:'dot', cx:135, cy:155, r:6},
+    {type:'dot', cx:165, cy:155, r:6},
+    {type:'dot', cx:150, cy:172, r:6}
+  ]},
+  { text:'カーブで「くち」', shapes:[{type:'curve', points:[[140,182],[150,190],[160,182]]}]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:250, rx:55, ry:45}]},
+  { text:'まるで「しっぽ」', shapes:[{type:'circle', cx:205, cy:255, r:14}]}
+]},
+{ id:'bear', title:'くま', emoji:'🐻', category:'animal', steps:[
+  { text:'まるで「かお」', shapes:[{type:'circle', cx:150, cy:150, r:55}]},
+  { text:'まるをふたつ「みみ」', shapes:[
+    {type:'circle', cx:110, cy:100, r:22},
+    {type:'circle', cx:190, cy:100, r:22}
+  ]},
+  { text:'「め」と「はな」', shapes:[
+    {type:'dot', cx:135, cy:145, r:6},
+    {type:'dot', cx:165, cy:145, r:6},
+    {type:'circle', cx:150, cy:162, r:10}
+  ]},
+  { text:'カーブで「くち」', shapes:[{type:'curve', points:[[130,175],[150,185],[170,175]]}]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:255, rx:65, ry:50}]},
+  { text:'まるで「て」と「あし」', shapes:[
+    {type:'circle', cx:95, cy:250, r:18},
+    {type:'circle', cx:205, cy:250, r:18}
+  ]}
+]},
+{ id:'dog', title:'いぬ', emoji:'🐶', category:'animal', steps:[
+  { text:'だえんで「かお」', shapes:[{type:'ellipse', cx:150, cy:150, rx:52, ry:48}]},
+  { text:'たれた「みみ」', shapes:[
+    {type:'ellipse', cx:105, cy:110, rx:20, ry:35, rot:-20},
+    {type:'ellipse', cx:195, cy:110, rx:20, ry:35, rot:20}
+  ]},
+  { text:'「め」と「はな」', shapes:[
+    {type:'dot', cx:132, cy:145, r:6},
+    {type:'dot', cx:168, cy:145, r:6},
+    {type:'circle', cx:150, cy:165, r:8}
+  ]},
+  { text:'カーブで「くち」', shapes:[{type:'curve', points:[[130,178],[150,190],[170,178]]}]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:250, rx:58, ry:45}]},
+  { text:'カーブで「しっぽ」', shapes:[{type:'curve', points:[[205,245],[235,220],[220,190]]}]}
+]},
+{ id:'bird', title:'とり', emoji:'🐦', category:'animal', steps:[
+  { text:'まるで「からだ」', shapes:[{type:'circle', cx:150, cy:180, r:55}]},
+  { text:'ちいさいまるで「あたま」', shapes:[{type:'circle', cx:150, cy:110, r:32}]},
+  { text:'さんかくで「くちばし」', shapes:[{type:'triangle', points:[[150,110],[180,118],[150,128]]}]},
+  { text:'てんで「め」', shapes:[{type:'dot', cx:140, cy:105, r:5}]},
+  { text:'だえんで「つばさ」', shapes:[{type:'ellipse', cx:120, cy:185, rx:35, ry:20, rot:-20}]},
+  { text:'せんで「あし」', shapes:[
+    {type:'line', points:[[135,235],[130,260]]},
+    {type:'line', points:[[165,235],[170,260]]}
+  ]}
+]},
+{ id:'fish', title:'さかな', emoji:'🐟', category:'animal', steps:[
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:140, cy:160, rx:70, ry:45}]},
+  { text:'さんかくで「しっぽ」', shapes:[{type:'triangle', points:[[205,160],[250,130],[250,190]]}]},
+  { text:'さんかくで「ひれ」', shapes:[{type:'triangle', points:[[130,120],[150,90],[165,122]]}]},
+  { text:'てんで「め」', shapes:[{type:'dot', cx:105, cy:150, r:7}]},
+  { text:'カーブで「くち」', shapes:[{type:'curve', points:[[70,160],[60,165],[70,172]]}]}
+]},
+{ id:'turtle', title:'かめ', emoji:'🐢', category:'animal', steps:[
+  { text:'おおきいまるで「こうら」', shapes:[{type:'circle', cx:150, cy:170, r:65}]},
+  { text:'まるで「あたま」', shapes:[{type:'circle', cx:150, cy:100, r:25}]},
+  { text:'てんで「め」', shapes:[{type:'dot', cx:142, cy:95, r:4},{type:'dot', cx:158, cy:95, r:4}]},
+  { text:'だえんで「あし」よんほん', shapes:[
+    {type:'ellipse', cx:90, cy:210, rx:20, ry:15},
+    {type:'ellipse', cx:210, cy:210, rx:20, ry:15},
+    {type:'ellipse', cx:95, cy:150, rx:18, ry:14},
+    {type:'ellipse', cx:205, cy:150, rx:18, ry:14}
+  ]},
+  { text:'せんで「もよう」', shapes:[
+    {type:'line', points:[[110,150],[190,150]]},
+    {type:'line', points:[[110,190],[190,190]]},
+    {type:'line', points:[[150,120],[150,220]]}
+  ]}
+]},
+{ id:'elephant', title:'ぞう', emoji:'🐘', category:'animal', steps:[
+  { text:'まるで「かお」', shapes:[{type:'circle', cx:150, cy:140, r:58}]},
+  { text:'おおきいだえんで「みみ」', shapes:[
+    {type:'ellipse', cx:90, cy:130, rx:35, ry:45},
+    {type:'ellipse', cx:210, cy:130, rx:35, ry:45}
+  ]},
+  { text:'ながいカーブで「はな」', shapes:[{type:'curve', points:[[150,175],[130,220],[160,245]]}]},
+  { text:'てんで「め」', shapes:[{type:'dot', cx:130, cy:130, r:6},{type:'dot', cx:170, cy:130, r:6}]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:250, rx:70, ry:50}]},
+  { text:'しかくで「あし」', shapes:[
+    {type:'rect', x:105, y:265, w:16, h:35},
+    {type:'rect', x:179, y:265, w:16, h:35}
+  ]}
+]},
+{ id:'panda', title:'ぱんだ', emoji:'🐼', category:'animal', steps:[
+  { text:'まるで「かお」', shapes:[{type:'circle', cx:150, cy:150, r:55}]},
+  { text:'まるで「みみ」', shapes:[
+    {type:'circle', cx:105, cy:105, r:22},
+    {type:'circle', cx:195, cy:105, r:22}
+  ]},
+  { text:'だえんで「めのまわり」', shapes:[
+    {type:'ellipse', cx:130, cy:145, rx:16, ry:20},
+    {type:'ellipse', cx:170, cy:145, rx:16, ry:20}
+  ]},
+  { text:'てんで「め」と「はな」', shapes:[
+    {type:'dot', cx:130, cy:150, r:5},
+    {type:'dot', cx:170, cy:150, r:5},
+    {type:'circle', cx:150, cy:165, r:6}
+  ]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:250, rx:60, ry:48}]},
+  { text:'だえんで「て」', shapes:[
+    {type:'ellipse', cx:100, cy:235, rx:18, ry:24, rot:-20},
+    {type:'ellipse', cx:200, cy:235, rx:18, ry:24, rot:20}
+  ]}
+]},
+{ id:'lion', title:'らいおん', emoji:'🦁', category:'animal', steps:[
+  { text:'おおきいまるで「たてがみ」', shapes:[{type:'circle', cx:150, cy:150, r:70}]},
+  { text:'まるで「かお」', shapes:[{type:'circle', cx:150, cy:150, r:45}]},
+  { text:'「め」と「はな」', shapes:[
+    {type:'dot', cx:135, cy:145, r:6},
+    {type:'dot', cx:165, cy:145, r:6},
+    {type:'triangle', points:[[142,158],[158,158],[150,168]]}
+  ]},
+  { text:'カーブで「くち」とひげ', shapes:[
+    {type:'curve', points:[[130,175],[150,185],[170,175]]},
+    {type:'line', points:[[115,160],[80,158]]},
+    {type:'line', points:[[185,160],[220,158]]}
+  ]},
+  { text:'だえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:255, rx:55, ry:45}]},
+  { text:'せんとまるで「しっぽ」', shapes:[
+    {type:'line', points:[[205,250],[245,255]]},
+    {type:'circle', cx:250, cy:250, r:10}
+  ]}
+]},
+
+{ id:'tulip', title:'ちゅーりっぷ', emoji:'🌷', category:'nature', steps:[
+  { text:'だえん3つで「はな」', shapes:[
+    {type:'ellipse', cx:130, cy:110, rx:22, ry:35, rot:-15},
+    {type:'ellipse', cx:150, cy:100, rx:22, ry:38},
+    {type:'ellipse', cx:170, cy:110, rx:22, ry:35, rot:15}
+  ]},
+  { text:'せんで「くき」', shapes:[{type:'line', points:[[150,138],[150,240]]}]},
+  { text:'カーブで「は」', shapes:[
+    {type:'curve', points:[[150,190],[100,200],[95,240]]},
+    {type:'curve', points:[[150,210],[200,220],[205,255]]}
+  ]}
+]},
+{ id:'sunflower', title:'ひまわり', emoji:'🌻', category:'nature', steps:[
+  { text:'まるで「なかしん」', shapes:[{type:'circle', cx:150, cy:130, r:30}]},
+  { text:'はなびらを8まい、まわりにかこう', shapes: petalRing(150,130,8,45,14,22) },
+  { text:'せんで「くき」', shapes:[{type:'line', points:[[150,160],[150,250]]}]},
+  { text:'カーブで「は」', shapes:[{type:'curve', points:[[150,210],[105,220],[100,250]]}]}
+]},
+{ id:'sakura', title:'さくら', emoji:'🌸', category:'nature', steps:[
+  { text:'はなびらを5まい、まるくかこう', shapes: petalRing(150,90,5,18,16,20) },
+  { text:'まるで「なかしん」', shapes:[{type:'circle', cx:150, cy:90, r:8}]},
+  { text:'カーブで「えだ」', shapes:[{type:'curve', points:[[150,90],[120,140],[80,180]]}]},
+  { text:'ちいさいはなびらを2まい、ちらしてみよう', shapes:[
+    {type:'ellipse', cx:60, cy:130, rx:8, ry:10},
+    {type:'ellipse', cx:220, cy:170, rx:8, ry:10}
+  ]}
+]},
+{ id:'tree', title:'き', emoji:'🌳', category:'nature', steps:[
+  { text:'しかくで「みき」', shapes:[{type:'rect', x:140, y:180, w:20, h:90}]},
+  { text:'おおきいまるで「は」', shapes:[{type:'circle', cx:150, cy:140, r:70}]},
+  { text:'てんで「み」をかざろう', shapes:[
+    {type:'dot', cx:120, cy:120, r:6},
+    {type:'dot', cx:170, cy:110, r:6},
+    {type:'dot', cx:150, cy:160, r:6}
+  ]}
+]},
+{ id:'leaf', title:'はっぱ', emoji:'🍃', category:'nature', steps:[
+  { text:'だえんで「はのかたち」', shapes:[{type:'ellipse', cx:150, cy:150, rx:45, ry:75, rot:20}]},
+  { text:'せんで「ようみゃく」', shapes:[
+    {type:'line', points:[[120,205],[180,95]]},
+    {type:'line', points:[[140,180],[125,165]]},
+    {type:'line', points:[[150,160],[135,145]]},
+    {type:'line', points:[[160,140],[145,125]]}
+  ]},
+  { text:'せんで「くき」', shapes:[{type:'line', points:[[120,205],[110,230]]}]}
+]},
+{ id:'butterfly', title:'ちょう', emoji:'🦋', category:'nature', steps:[
+  { text:'ほそながいだえんで「からだ」', shapes:[{type:'ellipse', cx:150, cy:150, rx:8, ry:55}]},
+  { text:'うえの「はね」をふたつ', shapes:[
+    {type:'ellipse', cx:110, cy:120, rx:35, ry:28},
+    {type:'ellipse', cx:190, cy:120, rx:35, ry:28}
+  ]},
+  { text:'したの「はね」をふたつ', shapes:[
+    {type:'ellipse', cx:115, cy:175, rx:28, ry:22},
+    {type:'ellipse', cx:185, cy:175, rx:28, ry:22}
+  ]},
+  { text:'せんで「しょっかく」', shapes:[
+    {type:'line', points:[[145,100],[130,70]]},
+    {type:'line', points:[[155,100],[170,70]]}
+  ]}
+]},
+{ id:'sun', title:'たいよう', emoji:'☀️', category:'nature', steps:[
+  { text:'まるをかこう', shapes:[{type:'circle', cx:150, cy:150, r:45}]},
+  { text:'せんで「ひかり」を8ほん', shapes: (function(){
+      var arr = [];
+      for(var i=0;i<8;i++){
+        var ang = (Math.PI/4)*i;
+        var x1 = 150+60*Math.cos(ang), y1 = 150+60*Math.sin(ang);
+        var x2 = 150+85*Math.cos(ang), y2 = 150+85*Math.sin(ang);
+        arr.push({type:'line', points:[[x1,y1],[x2,y2]]});
+      }
+      return arr;
+    })()
+  },
+  { text:'にっこりかおをかいてもいいね', shapes:[
+    {type:'dot', cx:135, cy:145, r:5},
+    {type:'dot', cx:165, cy:145, r:5},
+    {type:'curve', points:[[135,165],[150,175],[165,165]]}
+  ]}
+]},
+{ id:'cloud', title:'くも', emoji:'☁️', category:'nature', steps:[
+  { text:'おおきいまる', shapes:[{type:'circle', cx:150, cy:160, r:40}]},
+  { text:'ひだりみぎに まる', shapes:[
+    {type:'circle', cx:105, cy:170, r:28},
+    {type:'circle', cx:195, cy:170, r:28}
+  ]},
+  { text:'うえにも まる', shapes:[{type:'circle', cx:150, cy:125, r:30}]}
+]},
+{ id:'rainbow', title:'にじ', emoji:'🌈', category:'nature', steps:[
+  { text:'いちばん そとの アーチ', shapes:[{type:'curve', points:[[40,220],[150,60],[260,220]]}]},
+  { text:'2ほんめの アーチ', shapes:[{type:'curve', points:[[55,220],[150,85],[245,220]]}]},
+  { text:'3ほんめの アーチ', shapes:[{type:'curve', points:[[70,220],[150,110],[230,220]]}]},
+  { text:'りょうはしに くも', shapes:[
+    {type:'circle', cx:45, cy:220, r:18},
+    {type:'circle', cx:255, cy:220, r:18}
+  ]}
+]},
+{ id:'mushroom', title:'きのこ', emoji:'🍄', category:'nature', steps:[
+  { text:'だえんで「かさ」', shapes:[{type:'ellipse', cx:150, cy:140, rx:60, ry:40}]},
+  { text:'しかくで「じく」', shapes:[{type:'rect', x:130, y:160, w:40, h:70}]},
+  { text:'てんで「もよう」', shapes:[
+    {type:'dot', cx:120, cy:120, r:7},
+    {type:'dot', cx:155, cy:115, r:7},
+    {type:'dot', cx:175, cy:135, r:6}
+  ]}
+]}
+];
+
+/* ===================== 図形レンダラー ===================== */
+function strokeAttrs(mode){
+  if(mode==='guide') return 'stroke="#b0b0b0" stroke-width="3" stroke-dasharray="6,5"';
+  return 'stroke="#333" stroke-width="3.5"';
+}
+function stepShapeSvg(s, mode){
+  var sa = strokeAttrs(mode);
+  if(s.type==='circle') return '<circle cx="'+s.cx+'" cy="'+s.cy+'" r="'+s.r+'" '+sa+' fill="none"/>';
+  if(s.type==='dot') return '<circle cx="'+s.cx+'" cy="'+s.cy+'" r="'+s.r+'" fill="'+(mode==='guide'?'#c9c9c9':'#333')+'" stroke="none"/>';
+  if(s.type==='ellipse'){
+    var pivotX = (s.pivotX!=null) ? s.pivotX : s.cx;
+    var pivotY = (s.pivotY!=null) ? s.pivotY : s.cy;
+    var rot = s.rot||0;
+    return '<ellipse cx="'+s.cx+'" cy="'+s.cy+'" rx="'+s.rx+'" ry="'+s.ry+'" transform="rotate('+rot+' '+pivotX+' '+pivotY+')" '+sa+' fill="none"/>';
+  }
+  if(s.type==='triangle'){
+    var pts = s.points.map(function(p){ return p[0]+','+p[1]; }).join(' ');
+    return '<polygon points="'+pts+'" '+sa+' fill="none"/>';
+  }
+  if(s.type==='rect') return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" '+sa+' fill="none"/>';
+  if(s.type==='line'){
+    var pts2 = s.points.map(function(p){ return p[0]+','+p[1]; }).join(' ');
+    return '<polyline points="'+pts2+'" '+sa+' fill="none" stroke-linecap="round"/>';
+  }
+  if(s.type==='curve'){
+    var p0=s.points[0], pc=s.points[1], p1=s.points[2];
+    return '<path d="M '+p0[0]+' '+p0[1]+' Q '+pc[0]+' '+pc[1]+' '+p1[0]+' '+p1[1]+'" '+sa+' fill="none" stroke-linecap="round"/>';
+  }
+  return '';
+}
+
+/* ===================== 進捗保存 ===================== */
+function loadCompleted(){
+  try{ return JSON.parse(localStorage.getItem('ekaki_completed')||'[]'); }catch(e){ return []; }
+}
+function saveCompleted(arr){ try{ localStorage.setItem('ekaki_completed', JSON.stringify(arr)); }catch(e){} }
+function markCompleted(id){
+  var arr = loadCompleted();
+  if(arr.indexOf(id)===-1){ arr.push(id); saveCompleted(arr); }
+}
+
+/* ===================== 音 ===================== */
+var audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function playTone(freq,dur,delay,type){
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.2,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playStep(){ playTone(650+Math.random()*100, 0.09); }
+function playDone(){ [523,659,784,1046].forEach(function(f,i){ playTone(f,0.28,i*0.15); }); }
+
+/* ===================== 画面/状態 ===================== */
+var PEN_COLORS = ['#e53935','#f57c00','#fdd835','#43a047','#1e88e5','#8e24aa','#ec407a','#5d4037'];
+var currentCategory = 'animal';
+var currentTopicIndex = 0;
+var currentStep = 0;
+var currentPenColor = PEN_COLORS[0];
+var canvas, drawCtx;
+var isDrawing = false;
+
+function showScreen(name){
+  ['screenTitle','screenSelect','screenDraw'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'block' : 'none';
+  });
+}
+
+function renderCatTabs(){
+  var cats = [];
+  TOPICS.forEach(function(t){ if(cats.indexOf(t.category)===-1) cats.push(t.category); });
+  var el = document.getElementById('catTabs');
+  el.innerHTML = cats.map(function(c){
+    return '<button class="catTab'+(c===currentCategory?' active':'')+'" data-cat="'+c+'">'+(CATEGORY_LABEL[c]||c)+'</button>';
+  }).join('');
+  el.querySelectorAll('.catTab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      currentCategory = btn.getAttribute('data-cat');
+      renderCatTabs();
+      renderTopicGrid();
+    });
+  });
+}
+
+function renderTopicGrid(){
+  var completed = loadCompleted();
+  var list = TOPICS.filter(function(t){ return t.category===currentCategory; });
+  var el = document.getElementById('topicGrid');
+  el.innerHTML = list.map(function(t){
+    var idx = TOPICS.indexOf(t);
+    var done = completed.indexOf(t.id) !== -1;
+    return '<button class="topicCard" data-idx="'+idx+'">' +
+      (done ? '<div class="doneBadge">✓</div>' : '') +
+      '<div class="topicEmoji">'+t.emoji+'</div>' +
+      '<div class="topicName">'+t.title+'</div>' +
+      '</button>';
+  }).join('');
+  el.querySelectorAll('.topicCard').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openTopic(parseInt(btn.getAttribute('data-idx'),10));
+    });
+  });
+}
+
+function openTopic(idx){
+  currentTopicIndex = idx;
+  currentStep = 0;
+  showScreen('screenDraw');
+  clearCanvas();
+  renderDrawScreen();
+}
+
+function renderGuide(){
+  var topic = TOPICS[currentTopicIndex];
+  var html = '';
+  for(var i=0;i<=currentStep;i++){
+    var mode = (i===currentStep) ? 'guide' : 'done';
+    topic.steps[i].shapes.forEach(function(s){ html += stepShapeSvg(s, mode); });
+  }
+  document.getElementById('guideSvg').innerHTML = html;
+}
+
+function renderDrawScreen(){
+  var topic = TOPICS[currentTopicIndex];
+  document.getElementById('drawTitle').textContent = topic.emoji + ' ' + topic.title;
+  document.getElementById('stepBadge').textContent = (currentStep+1) + ' / ' + topic.steps.length;
+  document.getElementById('instructionBox').textContent = topic.steps[currentStep].text;
+  renderGuide();
+  document.getElementById('btnPrevStep').disabled = (currentStep===0);
+  var isLast = (currentStep === topic.steps.length-1);
+  var nextBtn = document.getElementById('btnNextStep');
+  nextBtn.textContent = isLast ? '🎉 できた！' : 'つぎへ ▶';
+  nextBtn.className = 'navBtn' + (isLast ? ' finish' : '');
+}
+
+function clearCanvas(){
+  if(!drawCtx) return;
+  drawCtx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+function getCanvasPoint(e){
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+  return { x: (e.clientX-rect.left)*scaleX, y: (e.clientY-rect.top)*scaleY };
+}
+
+function initCanvasEvents(){
+  canvas.addEventListener('pointerdown', function(e){
+    isDrawing = true;
+    var p = getCanvasPoint(e);
+    drawCtx.beginPath();
+    drawCtx.moveTo(p.x, p.y);
+    try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if(!isDrawing) return;
+    var p = getCanvasPoint(e);
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.strokeStyle = currentPenColor;
+    drawCtx.lineWidth = 7;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.stroke();
+  });
+  canvas.addEventListener('pointerup', function(){ isDrawing = false; });
+  canvas.addEventListener('pointercancel', function(){ isDrawing = false; });
+}
+
+function renderPalette(){
+  var el = document.getElementById('paletteRow');
+  el.innerHTML = PEN_COLORS.map(function(c,i){
+    return '<div class="penSwatch'+(c===currentPenColor?' selected':'')+'" data-color="'+c+'" style="background:'+c+'"></div>';
+  }).join('');
+  el.querySelectorAll('.penSwatch').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      currentPenColor = sw.getAttribute('data-color');
+      renderPalette();
+    });
+  });
+}
+
+function goPrevStep(){
+  if(currentStep>0){ currentStep--; playStep(); renderDrawScreen(); }
+}
+function goNextStep(){
+  var topic = TOPICS[currentTopicIndex];
+  if(currentStep < topic.steps.length-1){
+    currentStep++;
+    playStep();
+    renderDrawScreen();
+  } else {
+    finishTopic();
+  }
+}
+
+var confettiColors = ['#ffb37a','#ffd700','#70a1ff','#7bed9f','#ff8fc7','#ba68c8'];
+function finishTopic(){
+  var topic = TOPICS[currentTopicIndex];
+  markCompleted(topic.id);
+  playDone();
+  var overlay = document.getElementById('celebrateOverlay');
+  overlay.innerHTML =
+    '<div class="celebrate-emoji">🎉</div>' +
+    '<div class="celebrate-text">「'+topic.title+'」がかけたね！</div>' +
+    '<div class="celebrate-sub">じょうずにかけました！(タップでとじる)</div>';
+  for (var i=0; i<26; i++){
+    var piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+    var dur = 1.2 + Math.random()*1.3;
+    var delay = Math.random()*0.6;
+    piece.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+    overlay.appendChild(piece);
+  }
+  overlay.hidden = false;
+  overlay.addEventListener('click', function closeIt(){
+    overlay.hidden = true;
+    overlay.removeEventListener('click', closeIt);
+    renderCatTabs();
+    renderTopicGrid();
+    showScreen('screenSelect');
+  });
+}
+
+var styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(420px) rotate(360deg); opacity: 0.25; } }';
+document.head.appendChild(styleEl);
+
+function init(){
+  canvas = document.getElementById('drawCanvas');
+  drawCtx = canvas.getContext('2d');
+  initCanvasEvents();
+  renderPalette();
+
+  document.getElementById('btnStart').addEventListener('click', function(){
+    renderCatTabs();
+    renderTopicGrid();
+    showScreen('screenSelect');
+  });
+  document.getElementById('btnSelectBack').addEventListener('click', function(){ showScreen('screenTitle'); });
+  document.getElementById('btnDrawBack').addEventListener('click', function(){
+    renderCatTabs();
+    renderTopicGrid();
+    showScreen('screenSelect');
+  });
+  document.getElementById('btnClear').addEventListener('click', clearCanvas);
+  document.getElementById('btnPrevStep').addEventListener('click', goPrevStep);
+  document.getElementById('btnNextStep').addEventListener('click', goNextStep);
+
+  showScreen('screenTitle');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
