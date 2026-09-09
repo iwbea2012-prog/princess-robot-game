@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>みぞパズル</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; min-height:100%;
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background: linear-gradient(160deg, #e6d8c3 0%, #d9c9ac 45%, #c9b98e 100%);
+    background-attachment: fixed;
+    color:#4a3a20;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  h1,h2 { margin:0; }
+  .screen { display:none; min-height:100vh; }
+  .app { max-width: 560px; margin:0 auto; padding: 14px 12px 30px; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px; }
+  h1.title { font-size:18px; color:#7a4a1e; text-shadow:0 1px 0 #fff8ea; }
+  .icon-btn {
+    width:44px; height:44px; border-radius:50%; border:none; background:#fff8ea;
+    box-shadow:0 3px 8px rgba(0,0,0,0.2); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:active { transform:scale(0.9); }
+
+  #screenTitle .app { display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:44px; }
+  .titleLogo { font-size:50px; }
+  .titleMain { font-size:22px; font-weight:800; color:#7a4a1e; margin:6px 0 4px; }
+  .titleSub { color:#6a5636; font-size:14px; margin-bottom:22px; }
+  .bigBtn {
+    background: linear-gradient(180deg,#d9a45c,#b8752e); border:none; color:#fff;
+    font-weight:800; font-size:17px; padding:15px 30px; border-radius:18px;
+    box-shadow:0 6px 0 #8a561e; margin:6px;
+  }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #8a561e; }
+
+  /* ---------- select ---------- */
+  .tierBlock { margin-top: 16px; text-align:left; }
+  .tierHead { font-weight:800; color:#7a4a1e; font-size:14px; margin: 0 4px 8px; }
+  .levelGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap:10px; }
+  .levelCard { background:#fff8ea; border-radius:16px; padding:12px 6px; text-align:center; box-shadow:0 6px 14px rgba(120,80,30,0.2); position:relative; }
+  .levelCard:active { transform:scale(0.95); }
+  .levelName { font-size:12px; font-weight:800; color:#7a4a1e; }
+  .doneBadge { position:absolute; top:4px; right:4px; background:#4caf50; color:#fff; border-radius:50%; width:20px; height:20px; font-size:12px; display:flex; align-items:center; justify-content:center; }
+
+  /* ---------- play ---------- */
+  .playHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .playTitle { font-size:16px; font-weight:800; color:#7a4a1e; }
+  .stageCard { background:#fff8ea; border-radius:20px; box-shadow:0 12px 26px rgba(0,0,0,0.22); padding:10px; max-width:520px; margin:0 auto; }
+  #boardSvg { width:100%; height:auto; display:block; touch-action:manipulation; }
+
+  .hintBox { background:#fdf3df; border:2px solid #e3c98a; border-radius:12px; padding:8px 12px; font-size:13px; color:#7a5a2a; text-align:center; margin-bottom:8px; }
+
+  .playControls { display:flex; justify-content:center; gap:12px; margin-top:14px; }
+  .ctrlBtn { padding:12px 20px; border-radius:16px; border:none; font-weight:800; font-size:14px; color:#fff; }
+  .ctrlBtn.go { background:linear-gradient(180deg,#8dffa0,#3fc35b); box-shadow:0 4px 0 #2a9450; }
+  .ctrlBtn.reset { background:linear-gradient(180deg,#ffb3b3,#e35a5a); box-shadow:0 4px 0 #b83a3a; }
+  .ctrlBtn:active { transform:translateY(3px); box-shadow:none; }
+  .ctrlBtn:disabled { opacity:0.5; }
+
+  .celebrate-overlay, .failOverlay {
+    position:fixed; inset:0; background: rgba(255,248,234,0.95);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index:20; padding:20px;
+    animation: fadeIn .35s ease;
+  }
+  .celebrate-overlay[hidden], .failOverlay[hidden] { display:none; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .celebrate-emoji { font-size:56px; animation: bounce .6s ease infinite alternate; }
+  @keyframes bounce { from{ transform:translateY(0);} to{ transform:translateY(-14px);} }
+  .celebrate-text { font-size:22px; color:#7a4a1e; font-weight:800; margin-top:6px; }
+  .celebrate-sub { font-size:13px; color:#6a5636; margin-top:6px; }
+  .confetti-piece { position:absolute; top:-16px; width:10px; height:16px; opacity:0.95; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ===== Title ===== -->
+<div id="screenTitle" class="screen">
+  <div class="app">
+    <div class="titleLogo">🧊🔵</div>
+    <div class="titleMain">みぞパズル</div>
+    <div class="titleSub">みぞをつなげて、たまをスタートからゴールまでころがそう！</div>
+    <button class="bigBtn" id="btnStart">▶ はじめる</button>
+  </div>
+</div>
+
+<!-- ===== Select ===== -->
+<div id="screenSelect" class="screen">
+  <div class="app">
+    <header>
+      <button class="icon-btn" id="btnSelectBack">🏠</button>
+      <h1 class="title">レベルをえらんでね</h1>
+      <div style="width:44px;"></div>
+    </header>
+    <div id="tierBlocks"></div>
+  </div>
+</div>
+
+<!-- ===== Play ===== -->
+<div id="screenPlay" class="screen">
+  <div class="app">
+    <div class="playHeader">
+      <button class="icon-btn" id="btnPlayBack">◀</button>
+      <div class="playTitle" id="playTitle"></div>
+      <div style="width:44px;"></div>
+    </div>
+    <div class="hintBox">マスをタップすると、みぞのむきが かわるよ</div>
+    <div class="stageCard">
+      <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="playControls">
+      <button class="ctrlBtn reset" id="btnReset">🔄 リセット</button>
+      <button class="ctrlBtn go" id="btnRun">▶ ころがす</button>
+    </div>
+  </div>
+</div>
+
+<div class="celebrate-overlay" id="celebrateOverlay" hidden></div>
+<div class="failOverlay" id="failOverlay" hidden>
+  <div style="font-size:48px;">💧</div>
+  <div class="celebrate-text" id="failText">つながらなかったね</div>
+  <div class="celebrate-sub">もういちど みぞの むきを かえてみよう(タップでとじる)</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== みぞパズル: エンジン ===================== */
+var DIRS = [{dx:0,dy:-1},{dx:1,dy:0},{dx:0,dy:1},{dx:-1,dy:0}];
+function opposite(d){ return (d+2)%4; }
+
+var PIECE_CONNECTIONS = { 1:[1,3], 2:[0,2], 3:[0,1], 4:[1,2], 5:[2,3], 6:[3,0] };
+var PIECE_COUNT = 7;
+function cyclePiece(state){ return (state+1) % PIECE_COUNT; }
+
+function makeEmptyGrid(cols, rows){
+  var g = [];
+  for(var y=0;y<rows;y++){ var row=[]; for(var x=0;x<cols;x++) row.push(0); g.push(row); }
+  return g;
+}
+function isWallAt(level, x, y){ return level.walls.some(function(w){ return w.x===x && w.y===y; }); }
+function inBounds(level, x, y){ return x>=0 && y>=0 && x<level.cols && y<level.rows; }
+
+function simulate(level, grid){
+  var path = [{x:level.start.x, y:level.start.y}];
+  var curDir = level.start.exitDir;
+  var curX = level.start.x, curY = level.start.y;
+  var maxSteps = level.cols*level.rows + 4;
+  for(var step=0; step<maxSteps; step++){
+    var d = DIRS[curDir];
+    curX += d.dx; curY += d.dy;
+    if(!inBounds(level, curX, curY)) return { success:false, path:path, reason:'edge' };
+    path.push({x:curX, y:curY});
+    if(curX===level.goal.x && curY===level.goal.y) return { success:true, path:path };
+    if(isWallAt(level, curX, curY)) return { success:false, path:path, reason:'wall' };
+    var piece = grid[curY][curX];
+    var conn = PIECE_CONNECTIONS[piece];
+    if(!conn) return { success:false, path:path, reason:'empty' };
+    var enterSide = opposite(curDir);
+    if(conn.indexOf(enterSide) === -1) return { success:false, path:path, reason:'noconnect' };
+    var exitSide = (conn[0]===enterSide) ? conn[1] : conn[0];
+    curDir = exitSide;
+  }
+  return { success:false, path:path, reason:'timeout' };
+}
+
+/* ===================== レベルデータ (10問) ===================== */
+var TIER_LABEL = { easy:'かんたん', normal:'ふつう', hard:'むずかしい' };
+var TIER_ORDER = ['easy','normal','hard'];
+
+var LEVELS = [
+{ id:1, title:'まっすぐ', tier:'easy', cols:4, rows:4,
+  start:{x:0,y:0,exitDir:1}, goal:{x:3,y:0}, walls:[] },
+{ id:2, title:'かどをまがろう', tier:'easy', cols:4, rows:4,
+  start:{x:0,y:0,exitDir:2}, goal:{x:3,y:3}, walls:[] },
+{ id:3, title:'ジグザグ', tier:'easy', cols:4, rows:4,
+  start:{x:0,y:0,exitDir:1}, goal:{x:3,y:2}, walls:[] },
+{ id:4, title:'かべをよけよう', tier:'normal', cols:5, rows:5,
+  start:{x:0,y:2,exitDir:1}, goal:{x:4,y:2}, walls:[{x:2,y:2}] },
+{ id:5, title:'ながいみち', tier:'normal', cols:5, rows:5,
+  start:{x:0,y:0,exitDir:2}, goal:{x:4,y:4}, walls:[{x:2,y:2}] },
+{ id:6, title:'ふたつのかべ', tier:'normal', cols:5, rows:5,
+  start:{x:0,y:0,exitDir:1}, goal:{x:4,y:0}, walls:[{x:2,y:0},{x:2,y:1}] },
+{ id:7, title:'したからうえへ', tier:'normal', cols:5, rows:5,
+  start:{x:2,y:4,exitDir:0}, goal:{x:2,y:0}, walls:[{x:2,y:2}] },
+{ id:8, title:'おおまわり', tier:'hard', cols:6, rows:6,
+  start:{x:0,y:0,exitDir:1}, goal:{x:5,y:5}, walls:[{x:2,y:2},{x:3,y:2},{x:2,y:3}] },
+{ id:9, title:'ながいトンネル', tier:'hard', cols:6, rows:6,
+  start:{x:0,y:5,exitDir:0}, goal:{x:5,y:0}, walls:[{x:2,y:2},{x:3,y:3}] },
+{ id:10, title:'さいごのちょうせん', tier:'hard', cols:6, rows:6,
+  start:{x:0,y:0,exitDir:2}, goal:{x:5,y:5}, walls:[{x:1,y:1},{x:3,y:3},{x:4,y:1}] }
+];
+
+var CELL = 80;
+
+/* ===================== 進捗保存 ===================== */
+function loadCompleted(){ try{ return JSON.parse(localStorage.getItem('cuboro_completed')||'[]'); }catch(e){ return []; } }
+function saveCompleted(arr){ try{ localStorage.setItem('cuboro_completed', JSON.stringify(arr)); }catch(e){} }
+function markCompleted(id){ var arr=loadCompleted(); if(arr.indexOf(id)===-1){ arr.push(id); saveCompleted(arr); } }
+
+/* ===================== 音 ===================== */
+var audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function playTone(freq,dur,delay,type){
+  ensureAudio();
+  if(!audioCtx) return;
+  delay = delay||0;
+  var t0 = audioCtx.currentTime+delay;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.2,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playTurn(){ playTone(600+Math.random()*150, 0.08); }
+function playRoll(){ playTone(400+Math.random()*80, 0.06); }
+function playWin(){ [523,659,784,1046].forEach(function(f,i){ playTone(f,0.28,i*0.15); }); }
+function playBump(){ playTone(180, 0.2, 0, 'sawtooth'); }
+
+/* ===================== 画面/状態 ===================== */
+var currentLevelIndex = 0;
+var grid = null;
+var isRunning = false;
+
+function showScreen(name){
+  ['screenTitle','screenSelect','screenPlay'].forEach(function(id){
+    document.getElementById(id).style.display = (id===name) ? 'block' : 'none';
+  });
+}
+
+function renderSelect(){
+  var completed = loadCompleted();
+  var el = document.getElementById('tierBlocks');
+  var html = '';
+  TIER_ORDER.forEach(function(tier){
+    var list = LEVELS.filter(function(l){ return l.tier===tier; });
+    if(list.length===0) return;
+    html += '<div class="tierBlock"><div class="tierHead">'+TIER_LABEL[tier]+'</div><div class="levelGrid">';
+    list.forEach(function(lvl){
+      var idx = LEVELS.indexOf(lvl);
+      var done = completed.indexOf(lvl.id) !== -1;
+      html += '<button class="levelCard" data-idx="'+idx+'">' +
+        (done ? '<div class="doneBadge">✓</div>' : '') +
+        '<div class="levelName">'+lvl.title+'</div>' +
+        '</button>';
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.levelCard').forEach(function(btn){
+    btn.addEventListener('click', function(){ openLevel(parseInt(btn.getAttribute('data-idx'),10)); });
+  });
+}
+
+function pieceGrooveSvg(state, cx, cy){
+  if(state===0) return '';
+  var pts = {
+    0:[cx, cy-CELL/2], 1:[cx+CELL/2, cy], 2:[cx, cy+CELL/2], 3:[cx-CELL/2, cy]
+  };
+  var conn = PIECE_CONNECTIONS[state];
+  var p1 = pts[conn[0]], p2 = pts[conn[1]];
+  var d;
+  if((conn[0]===0&&conn[1]===2) || (conn[0]===1&&conn[1]===3)){
+    d = 'M '+p1[0]+' '+p1[1]+' L '+p2[0]+' '+p2[1];
+  } else {
+    d = 'M '+p1[0]+' '+p1[1]+' Q '+cx+' '+cy+' '+p2[0]+' '+p2[1];
+  }
+  return '<path d="'+d+'" stroke="#6b4a26" stroke-width="16" fill="none" stroke-linecap="round"/>' +
+         '<path d="'+d+'" stroke="#a97c48" stroke-width="8" fill="none" stroke-linecap="round"/>';
+}
+
+function cellBg(x, y, level){
+  var isStart = (x===level.start.x && y===level.start.y);
+  var isGoal = (x===level.goal.x && y===level.goal.y);
+  var isWall = isWallAt(level, x, y);
+  if(isWall) return '#5a4a38';
+  if(isStart) return '#bfe6c8';
+  if(isGoal) return '#ffe0a0';
+  return ((x+y)%2===0) ? '#f0e2c8' : '#e6d5b0';
+}
+
+function renderBoard(){
+  var level = LEVELS[currentLevelIndex];
+  var svg = document.getElementById('boardSvg');
+  var w = level.cols*CELL, h = level.rows*CELL;
+  svg.setAttribute('viewBox', '0 0 '+w+' '+h);
+  var html = '';
+  for(var y=0;y<level.rows;y++){
+    for(var x=0;x<level.cols;x++){
+      var cx = x*CELL, cy = y*CELL;
+      html += '<rect class="cellBg" data-x="'+x+'" data-y="'+y+'" x="'+cx+'" y="'+cy+'" width="'+CELL+'" height="'+CELL+
+        '" rx="10" fill="'+cellBg(x,y,level)+'" stroke="#c9a86a" stroke-width="2"/>';
+    }
+  }
+  for(var y2=0;y2<level.rows;y2++){
+    for(var x2=0;x2<level.cols;x2++){
+      if(isWallAt(level,x2,y2)) continue;
+      var centerX = x2*CELL+CELL/2, centerY = y2*CELL+CELL/2;
+      html += pieceGrooveSvg(grid[y2][x2], centerX, centerY);
+    }
+  }
+  var sx = level.start.x*CELL+CELL/2, sy = level.start.y*CELL+CELL/2;
+  html += '<circle cx="'+sx+'" cy="'+sy+'" r="14" fill="#2196f3" stroke="#0d47a1" stroke-width="2" id="marbleIcon"/>';
+  var arrowD = DIRS[level.start.exitDir];
+  html += '<line x1="'+sx+'" y1="'+sy+'" x2="'+(sx+arrowD.dx*30)+'" y2="'+(sy+arrowD.dy*30)+'" stroke="#0d47a1" stroke-width="4" marker-end="url(#arrowHead)"/>';
+  var gx = level.goal.x*CELL+CELL/2, gy = level.goal.y*CELL+CELL/2;
+  html += '<text x="'+gx+'" y="'+(gy+10)+'" font-size="30" text-anchor="middle">🎯</text>';
+  html = '<defs><marker id="arrowHead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#0d47a1"/></marker></defs>' + html;
+  svg.innerHTML = html;
+
+  svg.querySelectorAll('.cellBg').forEach(function(rect){
+    var x = parseInt(rect.getAttribute('data-x'),10);
+    var y = parseInt(rect.getAttribute('data-y'),10);
+    var lvl = LEVELS[currentLevelIndex];
+    if(isWallAt(lvl,x,y)) return;
+    if((x===lvl.start.x&&y===lvl.start.y)) return;
+    rect.style.cursor = 'pointer';
+    rect.addEventListener('click', function(){
+      if(isRunning) return;
+      grid[y][x] = cyclePiece(grid[y][x]);
+      playTurn();
+      renderBoard();
+    });
+  });
+}
+
+function openLevel(idx){
+  currentLevelIndex = idx;
+  var level = LEVELS[idx];
+  grid = makeEmptyGrid(level.cols, level.rows);
+  document.getElementById('playTitle').textContent = level.title;
+  document.getElementById('celebrateOverlay').hidden = true;
+  document.getElementById('failOverlay').hidden = true;
+  renderBoard();
+  showScreen('screenPlay');
+}
+
+function resetLevel(){
+  var level = LEVELS[currentLevelIndex];
+  grid = makeEmptyGrid(level.cols, level.rows);
+  renderBoard();
+}
+
+var confettiColors = ['#d9a45c','#ffd700','#70a1ff','#7bed9f','#ba68c8','#ff8fc7'];
+function celebrate(){
+  var level = LEVELS[currentLevelIndex];
+  markCompleted(level.id);
+  playWin();
+  var overlay = document.getElementById('celebrateOverlay');
+  overlay.innerHTML =
+    '<div class="celebrate-emoji">🎉</div>' +
+    '<div class="celebrate-text">ゴールにとどいたね！</div>' +
+    '<div class="celebrate-sub">すごい くうかんにんちりょく！(タップでとじる)</div>';
+  for (var i=0; i<26; i++){
+    var piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+    var dur = 1.2 + Math.random()*1.3;
+    var delay = Math.random()*0.6;
+    piece.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+    overlay.appendChild(piece);
+  }
+  overlay.hidden = false;
+  overlay.addEventListener('click', function closeIt(){
+    overlay.hidden = true;
+    overlay.removeEventListener('click', closeIt);
+    renderSelect();
+    showScreen('screenSelect');
+  });
+}
+
+function showFail(){
+  playBump();
+  var overlay = document.getElementById('failOverlay');
+  overlay.hidden = false;
+  overlay.addEventListener('click', function closeIt(){
+    overlay.hidden = true;
+    overlay.removeEventListener('click', closeIt);
+  });
+}
+
+var styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes confettiFall { to { transform: translateY(420px) rotate(360deg); opacity: 0.25; } }';
+document.head.appendChild(styleEl);
+
+function animateMarble(path, onDone){
+  var level = LEVELS[currentLevelIndex];
+  var svg = document.getElementById('boardSvg');
+  var i = 0;
+  isRunning = true;
+  function step(){
+    if(i >= path.length){ isRunning=false; onDone(); return; }
+    var p = path[i];
+    var marble = svg.querySelector('#marbleIcon');
+    if(marble){
+      marble.setAttribute('cx', p.x*CELL+CELL/2);
+      marble.setAttribute('cy', p.y*CELL+CELL/2);
+    }
+    playRoll();
+    i++;
+    setTimeout(step, 260);
+  }
+  step();
+}
+
+function runSimulation(){
+  if(isRunning) return;
+  var level = LEVELS[currentLevelIndex];
+  var res = simulate(level, grid);
+  animateMarble(res.path, function(){
+    if(res.success) celebrate();
+    else showFail();
+  });
+}
+
+function init(){
+  document.getElementById('btnStart').addEventListener('click', function(){
+    renderSelect();
+    showScreen('screenSelect');
+  });
+  document.getElementById('btnSelectBack').addEventListener('click', function(){ showScreen('screenTitle'); });
+  document.getElementById('btnPlayBack').addEventListener('click', function(){
+    renderSelect();
+    showScreen('screenSelect');
+  });
+  document.getElementById('btnReset').addEventListener('click', resetLevel);
+  document.getElementById('btnRun').addEventListener('click', runSimulation);
+  showScreen('screenTitle');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
