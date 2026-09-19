@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>じゅんばんおぼえ</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-touch-callout:none; }
+  html,body { margin:0; min-height:100%; font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Segoe UI",sans-serif;
+    background:linear-gradient(160deg,#fff1c9 0%,#ffd9ec 50%,#d9e8ff 100%); background-attachment:fixed; color:#4a3550; }
+  button { font-family:inherit; cursor:pointer; }
+  .app { max-width:520px; margin:0 auto; padding:12px 12px 30px; text-align:center; }
+  header { display:flex; align-items:center; justify-content:space-between; padding:4px 2px 8px; }
+  h1 { margin:0; font-size:18px; color:#b4531a; }
+  .icon-btn { width:44px; height:44px; border-radius:50%; border:none; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,.18); font-size:20px; display:flex; align-items:center; justify-content:center; text-decoration:none; color:inherit; }
+  .modes { display:flex; justify-content:center; gap:10px; margin:6px 0 10px; }
+  .modeBtn { background:#fff; border:2px solid #ffd7b0; color:#b4531a; font-weight:800; padding:8px 16px; border-radius:14px; font-size:14px; }
+  .modeBtn.on { background:#f0813f; color:#fff; border-color:#c05f24; }
+  .status { display:flex; justify-content:center; gap:10px; margin-bottom:8px; }
+  .pill { background:#fff; border-radius:12px; padding:5px 14px; font-weight:800; font-size:13px; color:#b4531a; box-shadow:0 3px 8px rgba(0,0,0,.12); }
+  .msg { min-height:30px; font-size:18px; font-weight:800; color:#b4531a; margin:6px 0 10px; }
+  .pads { display:grid; gap:12px; width:100%; max-width:440px; margin:0 auto; }
+  .pads.n4 { grid-template-columns:repeat(2,1fr); }
+  .pads.n6 { grid-template-columns:repeat(3,1fr); }
+  .pad { aspect-ratio:1; border:none; border-radius:26px; font-size:56px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg,var(--c1),var(--c2)); box-shadow:0 8px 0 var(--c3), 0 12px 20px rgba(0,0,0,.2);
+    opacity:.62; transition:transform .08s, opacity .08s, filter .08s; touch-action:manipulation; }
+  .pads.n6 .pad { font-size:44px; }
+  .pad.lit { opacity:1; transform:scale(1.07); filter:brightness(1.25) saturate(1.2); box-shadow:0 0 0 6px #fff, 0 0 30px 10px var(--c1); }
+  .pad:active:not(.locked) { transform:scale(.96); }
+  .pads.locked .pad { cursor:default; }
+  .pads.canTap .pad { opacity:.9; }
+  .bigBtn { background:linear-gradient(180deg,#ffb37a,#f0813f); border:none; color:#fff; font-weight:800; font-size:17px; padding:14px 30px; border-radius:18px; box-shadow:0 6px 0 #c05f24; margin-top:18px; }
+  .bigBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #c05f24; }
+  .hint { font-size:12px; color:#8a6a4a; margin-top:14px; line-height:1.6; }
+  .overlay { position:fixed; inset:0; background:rgba(255,255,255,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; z-index:20; padding:20px; }
+  .overlay[hidden] { display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header><a class="icon-btn" href="../../index.html">🏠</a><h1>🎵 じゅんばんおぼえ</h1><div style="width:44px"></div></header>
+  <div class="modes" id="modes"></div>
+  <div class="status"><div class="pill" id="lenPill"></div><div class="pill" id="bestPill"></div></div>
+  <div class="msg" id="msg">「スタート」を おしてね</div>
+  <div class="pads n4" id="pads"></div>
+  <button class="bigBtn" id="btnStart">▶ スタート</button>
+  <div class="hint">ひかって なる じゅんばんを よ〜く みて、おなじ じゅんばんで タップしてね。<br>まちがえても だいじょうぶ！もういちど おなじ もんだいを みせるよ。</div>
+</div>
+<div class="overlay" id="ov" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var PADS = [
+  {e:'🐶', c:['#ff8a80','#e5484d','#a82a30'], f:262},
+  {e:'🐱', c:['#ffd54f','#f2b100','#b07f00'], f:330},
+  {e:'🐰', c:['#81d4fa','#2f9ee6','#1c6aa3'], f:392},
+  {e:'🐻', c:['#a5d66f','#5cb338','#3a7d20'], f:523},
+  {e:'🐼', c:['#ce93d8','#a44bc1','#742d8a'], f:587},
+  {e:'🦁', c:['#ffab91','#f5722e','#b04a14'], f:659}
+];
+var MODES = { 4:{n:4,name:'4つ',base:700}, 6:{n:6,name:'6つ',base:560} };
+var mode = 4, seq = [], inputPos = 0, busy = false, started = false, token = 0, mistakes = 0;
+
+function bestKey(){ return 'simon_best_'+mode; }
+function getBest(){ try{ return parseInt(localStorage.getItem(bestKey())||'0',10); }catch(e){ return 0; } }
+function setBest(n){ try{ if(n>getBest()) localStorage.setItem(bestKey(),String(n)); }catch(e){} }
+
+var ac=null;
+function tone(f,d,delay,type){ try{ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); var t=ac.currentTime+(delay||0); var o=ac.createOscillator(), g=ac.createGain(); o.type=type||'sine'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t+d+0.03);}catch(e){} }
+
+var padsEl = document.getElementById('pads'), msgEl = document.getElementById('msg');
+function msg(t){ msgEl.textContent = t; }
+function renderModes(){
+  var el=document.getElementById('modes');
+  el.innerHTML=[4,6].map(function(m){ return '<button class="modeBtn'+(m===mode?' on':'')+'" data-m="'+m+'">'+MODES[m].name+'の どうぶつ</button>'; }).join('');
+  el.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ if(started && busy) return; mode=parseInt(b.getAttribute('data-m'),10); resetGame(); }); });
+}
+function renderPads(){
+  var n=MODES[mode].n;
+  padsEl.className='pads n'+n+' locked';
+  padsEl.innerHTML=PADS.slice(0,n).map(function(p,i){
+    return '<button class="pad" data-i="'+i+'" style="--c1:'+p.c[0]+';--c2:'+p.c[1]+';--c3:'+p.c[2]+'">'+p.e+'</button>';
+  }).join('');
+  padsEl.querySelectorAll('.pad').forEach(function(b){
+    b.addEventListener('pointerdown',function(e){ e.preventDefault(); onTap(parseInt(b.getAttribute('data-i'),10)); });
+  });
+}
+function updatePills(){
+  document.getElementById('lenPill').textContent='いま '+(started?seq.length:0)+' こ';
+  document.getElementById('bestPill').textContent='🏆 ベスト '+getBest()+' こ';
+}
+function resetGame(){
+  token++; seq=[]; inputPos=0; busy=false; started=false; mistakes=0;
+  renderModes(); renderPads(); updatePills(); msg('「スタート」を おしてね');
+  document.getElementById('btnStart').style.display='';
+}
+function light(i,dur){
+  var el=padsEl.children[i]; if(!el) return;
+  el.classList.add('lit'); tone(PADS[i].f,dur/1000*0.9);
+  setTimeout(function(){ el.classList.remove('lit'); },dur);
+}
+function speed(){ // ながくなるほど すこしずつ はやく
+  return Math.max(MODES[mode].base-Math.min(seq.length,14)*22, 300);
+}
+function playSeq(){
+  var my=++token; busy=true; padsEl.className='pads n'+MODES[mode].n+' locked'; inputPos=0;
+  msg('👀 よ〜く みてね');
+  var sp=speed(), i=0;
+  setTimeout(function step(){
+    if(my!==token) return;
+    if(i>=seq.length){ busy=false; padsEl.className='pads n'+MODES[mode].n+' canTap'; msg('🎵 おなじ じゅんばんで タップ！'); return; }
+    light(seq[i], sp*0.6); i++;
+    setTimeout(step, sp);
+  }, 700);
+}
+function nextRound(){
+  seq.push(Math.floor(Math.random()*MODES[mode].n));
+  updatePills(); playSeq();
+}
+function onTap(i){
+  if(!started || busy) return;
+  light(i,220);
+  if(i===seq[inputPos]){
+    inputPos++;
+    if(inputPos===seq.length){
+      busy=true; padsEl.className='pads n'+MODES[mode].n+' locked';
+      setBest(seq.length); updatePills();
+      var praise = seq.length>=12?'すごすぎる！！':seq.length>=8?'てんさい！':seq.length>=5?'すごいね！':'せいかい！';
+      msg('✨ '+praise+' '+seq.length+'こ クリア');
+      [523,659,784].forEach(function(f,k){ tone(f,0.2,0.3+k*0.12); });
+      if([5,8,12,16].indexOf(seq.length)!==-1){ setTimeout(function(){ milestone(seq.length); },900); }
+      else setTimeout(nextRound,1400);
+    }
+  } else {
+    // まちがい: おこらない・ゲームオーバーなし。おなじ もんだいを もういちど みせる
+    mistakes++;
+    busy=true; padsEl.className='pads n'+MODES[mode].n+' locked';
+    tone(200,0.25,0,'triangle');
+    msg('おしい！もういちど みてみよう 🌟');
+    setTimeout(playSeq,1500);
+  }
+}
+function milestone(n){
+  var ov=document.getElementById('ov');
+  ov.innerHTML='<div style="font-size:60px">🎉</div><div style="font-size:24px;font-weight:800;color:#b4531a;margin:8px 0">'+n+'こ おぼえられたよ！</div>'
+    +'<div style="font-size:14px;color:#8a6a4a;margin-bottom:14px">まだまだ つづけられるよ。どうする？</div>'
+    +'<button class="bigBtn" id="ovGo" style="margin-top:0">つづける ▶</button>'
+    +'<button class="bigBtn" id="ovEnd" style="background:#fff;color:#b4531a;box-shadow:0 6px 0 #ffd7b0;margin-top:14px">ここで おわる</button>';
+  ov.hidden=false;
+  [523,659,784,1046].forEach(function(f,k){ tone(f,0.28,k*0.15); });
+  document.getElementById('ovGo').addEventListener('click',function(){ ov.hidden=true; nextRound(); });
+  document.getElementById('ovEnd').addEventListener('click',function(){ ov.hidden=true; resetGame(); });
+}
+document.getElementById('btnStart').addEventListener('click',function(){
+  started=true; mistakes=0; seq=[]; this.style.display='none'; nextRound();
+});
+resetGame();
+})();
+</script>
+</body>
+</html>
